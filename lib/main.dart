@@ -12,38 +12,11 @@ import 'core/app_localizations.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  
-  final storageService = LocalStorageService();
-  await storageService.init();
-
-  final alarmService = AlarmService(storageService);
-  await alarmService.init();
-
-  await MobileAds.instance.initialize();
-
-  // Dinleyici: Eğer alarm çalarsa Ringing ekranına atar.
-  Alarm.ringing.listen((alarmSet) {
-    // AlarmSet birden fazla alarm içerebilir, ilkini kullanıyoruz.
-    final ringAlarm = alarmSet.alarms.firstOrNull;
-    if (ringAlarm != null) {
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (context) => RingingView(alarmId: ringAlarm.id),
-        ),
-      );
-    }
-  });
-
   runApp(
-    ProviderScope(
-      overrides: [
-        localStorageServiceProvider.overrideWithValue(storageService),
-        alarmServiceProvider.overrideWithValue(alarmService),
-      ],
-      child: const AlarmApp(),
+    const ProviderScope(
+      child: AlarmApp(),
     ),
   );
 }
@@ -53,15 +26,86 @@ class AlarmApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Uygulamanın dil değişikliğini dinlemesi için (böylece tüm widget ağacı rebuild edilir)
     ref.watch(localeProvider);
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Zorlu Alarm',
+      title: 'Cervus Alarm',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const HomeView(),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+class SplashScreen extends ConsumerStatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      // 1. Firebase (Max 5 saniye bekletiyoruz)
+      await Firebase.initializeApp().timeout(const Duration(seconds: 5));
+
+      // 2. Local Storage (Hive)
+      final storageService = ref.read(localStorageServiceProvider);
+      await storageService.init();
+
+      // 3. Alarm Service
+      final alarmService = ref.read(alarmServiceProvider);
+      await alarmService.init();
+
+      // 4. AdMob (Hızlı geçmesi için async bırakıyoruz)
+      MobileAds.instance.initialize();
+
+      // 5. Alarm Dinleyicisi
+      Alarm.ringing.listen((alarmSet) {
+        final ringAlarm = alarmSet.alarms.firstOrNull;
+        if (ringAlarm != null) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (context) => RingingView(alarmId: ringAlarm.id),
+            ),
+          );
+        }
+      });
+
+      // Her şey tamam! Ana sayfaya geçiyoruz.
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeView()),
+        );
+      }
+    } catch (e) {
+      debugPrint("Kritik Başlatma Hatası: $e");
+      // Hata olsa bile kullanıcıyı ana sayfaya gönderelim ki beyaz ekranda kalmasın
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeView()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
+      body: Center(
+        child: CircularProgressIndicator(
+          color: AppTheme.primaryColor,
+        ),
+      ),
     );
   }
 }
