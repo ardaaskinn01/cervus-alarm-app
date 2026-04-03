@@ -11,7 +11,7 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: cardColor,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -28,14 +28,14 @@ class AppTheme {
         ),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return Colors.white;
           }
           return Colors.grey;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return secondaryColor;
           }
           return Colors.grey.withOpacity(0.3);
