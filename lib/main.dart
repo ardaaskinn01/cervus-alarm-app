@@ -8,6 +8,7 @@ import 'core/app_theme.dart';
 import 'services/local_storage_service.dart';
 import 'services/alarm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/app_localizations.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -53,25 +54,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
+    // İlk karenin çizildiğinden emin olmak için çok kısa bir bekleme
+    await Future.delayed(const Duration(milliseconds: 100));
+
     try {
-      // 1. Firebase (Max 5 saniye bekletiyoruz)
-      await Firebase.initializeApp().timeout(const Duration(seconds: 5));
+      // 1. Firebase (Options ile ve Timeout ekli)
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(const Duration(seconds: 8));
 
       // 2. Local Storage (Hive)
       final storageService = ref.read(localStorageServiceProvider);
-      await storageService.init();
+      await storageService.init().timeout(const Duration(seconds: 5));
 
       // 3. Alarm Service
       final alarmService = ref.read(alarmServiceProvider);
-      await alarmService.init();
+      await alarmService.init().timeout(const Duration(seconds: 5));
 
-      // 4. AdMob (Hızlı geçmesi için async bırakıyoruz)
+      // 4. AdMob (Async)
       MobileAds.instance.initialize();
 
       // 5. Alarm Dinleyicisi
       Alarm.ringing.listen((alarmSet) {
         final ringAlarm = alarmSet.alarms.firstOrNull;
-        if (ringAlarm != null) {
+        if (ringAlarm != null && mounted) {
           navigatorKey.currentState?.push(
             MaterialPageRoute(
               builder: (context) => RingingView(alarmId: ringAlarm.id),
@@ -80,15 +86,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
       });
 
-      // Her şey tamam! Ana sayfaya geçiyoruz.
+      // Her şey hazır!
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
         );
       }
     } catch (e) {
-      debugPrint("Kritik Başlatma Hatası: $e");
-      // Hata olsa bile kullanıcıyı ana sayfaya gönderelim ki beyaz ekranda kalmasın
+      debugPrint("⚠️ Başlatma sırasında bir sorun çıktı: $e");
+      // Hata olsa bile ana sayfaya düşür ki beyaz ekran kalmasın
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
