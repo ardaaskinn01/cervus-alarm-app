@@ -1,4 +1,4 @@
-package com.cervus.alarm.alarm
+package com.cervus.alarm
 
 import io.flutter.embedding.android.FlutterActivity
 

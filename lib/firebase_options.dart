@@ -17,7 +17,10 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -25,9 +28,15 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -40,19 +49,9 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA2TgmU7L0Xp6WQ6pHS7Mt5GOxR5zfsHHY',
-    appId: '1:782844791733:web:5421d2130a635a14d627fc',
-    messagingSenderId: '782844791733',
-    projectId: 'alarm-cb781',
-    authDomain: 'alarm-cb781.firebaseapp.com',
-    storageBucket: 'alarm-cb781.firebasestorage.app',
-    measurementId: 'G-1BS2L48YN7',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyARF7t-Aw9fPmMCcjfNukWVdkwfaOrp4rM',
-    appId: '1:782844791733:android:ddba7c56ede2c22dd627fc',
+    appId: '1:782844791733:android:d3c190702557c8d8d627fc',
     messagingSenderId: '782844791733',
     projectId: 'alarm-cb781',
     storageBucket: 'alarm-cb781.firebasestorage.app',
@@ -60,29 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAfTNWzZkWnwrf51ZPymgVv3K-4NiLnKyw',
-    appId: '1:782844791733:ios:351574d329c1558ed627fc',
+    appId: '1:782844791733:ios:4d95df5acac41529d627fc',
     messagingSenderId: '782844791733',
     projectId: 'alarm-cb781',
     storageBucket: 'alarm-cb781.firebasestorage.app',
-    iosBundleId: 'com.cervus.alarm.alarm',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAfTNWzZkWnwrf51ZPymgVv3K-4NiLnKyw',
-    appId: '1:782844791733:ios:351574d329c1558ed627fc',
-    messagingSenderId: '782844791733',
-    projectId: 'alarm-cb781',
-    storageBucket: 'alarm-cb781.firebasestorage.app',
-    iosBundleId: 'com.cervus.alarm.alarm',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyA2TgmU7L0Xp6WQ6pHS7Mt5GOxR5zfsHHY',
-    appId: '1:782844791733:web:96c3a203c2cb2c8bd627fc',
-    messagingSenderId: '782844791733',
-    projectId: 'alarm-cb781',
-    authDomain: 'alarm-cb781.firebaseapp.com',
-    storageBucket: 'alarm-cb781.firebasestorage.app',
-    measurementId: 'G-X8ECE3XLR0',
+    iosBundleId: 'com.cervus.alarm',
   );
 }

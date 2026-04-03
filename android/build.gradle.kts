@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-serialization-compiler-plugin-embeddable:2.1.0")
+    }
+}
+
 allprojects {
     repositories {
         google()

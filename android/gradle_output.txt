@@ -1,0 +1,39 @@
+> Task :gradle:checkKotlinGradlePluginConfigurationErrors
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy UP-TO-DATE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+
+> Task :projects
+
+Projects:
+
+------------------------------------------------------------
+Root project 'android'
+------------------------------------------------------------
+
+Root project 'android'
++--- Project ':alarm'
++--- Project ':android_alarm_manager_plus'
++--- Project ':app'
++--- Project ':firebase_core'
++--- Project ':flutter_fgbg'
++--- Project ':flutter_local_notifications'
++--- Project ':flutter_ringtone_player'
++--- Project ':google_mobile_ads'
++--- Project ':path_provider_android'
++--- Project ':shared_preferences_android'
+\--- Project ':webview_flutter_android'
+
+Included builds:
+
+\--- Included build ':gradle'
+
+To see a list of the tasks of a project, run gradlew <project-path>:tasks
+For example, try running gradlew :alarm:tasks
+
+BUÝLD SUCCESSFUL in 3s
+7 actionable tasks: 2 executed, 5 up-to-date
