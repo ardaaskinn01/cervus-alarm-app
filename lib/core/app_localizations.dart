@@ -37,6 +37,10 @@ class AppLocalizations {
       'add_new_title': 'Yeni Alarm',
       'add_repeat': 'Tekrarlama',
       'add_save': 'Kaydet',
+      'add_sound': 'Zil Sesi Seç',
+      'sound_soft': 'Yumuşak Çan',
+      'sound_hard': 'Sert Alarm',
+      'sound_modern': 'Modern Dijital',
 
       // SettingsView
       'settings_title': 'Ayarlar',
@@ -89,6 +93,10 @@ class AppLocalizations {
       'add_new_title': 'New Alarm',
       'add_repeat': 'Repeat',
       'add_save': 'Save',
+      'add_sound': 'Select Sound',
+      'sound_soft': 'Soft Bell',
+      'sound_hard': 'Hard Alarm',
+      'sound_modern': 'Modern Digital',
 
       // SettingsView
       'settings_title': 'Settings',

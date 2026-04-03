@@ -56,8 +56,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  build_runner: ^2.5.4
-  hive_generator: ^2.0.1
+  # build_runner ve hive_generator arasındaki analyzer/macros çakışmasını önlemek için sürümleri esnetiyoruz:
+  build_runner: ^2.4.0
+  hive_generator: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -70,6 +71,9 @@ flutter:
   # the material Icons class.
   assets:
     - shorebird.yaml
+    - assets/audio/soft_alarm.mp3
+    - assets/audio/hard_alarm.mp3
+    - assets/audio/modern_alarm.mp3
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

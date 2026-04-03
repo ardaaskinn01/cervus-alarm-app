@@ -15,16 +15,15 @@ class AlarmService {
 
   AlarmService(this._storage);
   Future<void> init() async {
-    // alarm paketinin init işlemini yapıyoruz.
-    // iOS tarafında arkaplan yetkilerini kendi içinden Apple API'siyle sarmalar.
     await Alarm.init();
     
-    // iOS için bildirim (notification) isteği atalım.
-    if (Alarm.android) {
-       // Android implementation details here if we ever deploy it.
-    } else {
-       // Request permission for iOS mostly, handled natively by Alarm.hasSystemAlertWindowPermission
-       // Actually Alarm handles most checks automatically on `set`.
+    // Geçmişte kalmış alarmları temizle (Bildirimlerin sonsuz kalmaması için)
+    final allAlarms = await Alarm.getAlarms();
+    final now = DateTime.now();
+    for (var alarm in allAlarms) {
+      if (alarm.dateTime.isBefore(now)) {
+        await Alarm.stop(alarm.id);
+      }
     }
   }
 
@@ -47,10 +46,14 @@ class AlarmService {
     // TODO: repeatDays logic for scheduling (skipping non-selected days) 
     // This is a basic schedule for the very exact next occurrence.
 
+    final String alarmSound = alarm.soundPath == 'default' || alarm.soundPath.isEmpty
+        ? 'assets/audio/soft_alarm.mp3'
+        : alarm.soundPath;
+
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
-      assetAudioPath: 'assets/hard_alarm.mp3', // Özel alarm sesini kullanıyoruz
+      assetAudioPath: alarmSound,
       volumeSettings: VolumeSettings.fade(
         volume: 1.0,
         fadeDuration: const Duration(seconds: 3),
@@ -74,6 +77,12 @@ class AlarmService {
 
   Future<void> stopAlarm(int id) async {
     await Alarm.stop(id);
+    // iOS'ta bildirimlerin temizlenmesi için kısa bir gecikme sonrası garanti durdurma
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      if (await Alarm.isRinging(id)) {
+        await Alarm.stop(id);
+      }
+    });
   }
 
   // Bir alarm henüz çalmadıysa ama iptal listesindeyse silmek için
