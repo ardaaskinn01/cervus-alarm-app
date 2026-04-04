@@ -1,4 +1,4 @@
-import 'package:alarm/alarm.dart';
+// import 'package:alarm/alarm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
 import 'package:flutter/foundation.dart';
@@ -15,16 +15,16 @@ class AlarmService {
 
   AlarmService(this._storage);
   Future<void> init() async {
-    await Alarm.init();
+    // await Alarm.init();
     
     // Geçmişte kalmış alarmları temizle (Bildirimlerin sonsuz kalmaması için)
-    final allAlarms = await Alarm.getAlarms();
-    final now = DateTime.now();
-    for (var alarm in allAlarms) {
-      if (alarm.dateTime.isBefore(now)) {
-        await Alarm.stop(alarm.id);
-      }
-    }
+    // final allAlarms = await Alarm.getAlarms();
+    // final now = DateTime.now();
+    // for (var alarm in allAlarms) {
+    //   if (alarm.dateTime.isBefore(now)) {
+    //     await Alarm.stop(alarm.id);
+    //   }
+    // }
   }
 
   Future<void> scheduleAlarm(AlarmModel alarm) async {
@@ -50,6 +50,7 @@ class AlarmService {
         ? 'assets/audio/soft_alarm.mp3'
         : alarm.soundPath;
 
+    /*
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
@@ -70,23 +71,24 @@ class AlarmService {
       await Alarm.set(alarmSettings: alarmSettings);
     } catch (e) {
       if (kDebugMode) {
-        print("Alarm kurulamadı: \$e");
+        print("Alarm kurulamadı: $e");
       }
     }
+    */
   }
 
   Future<void> stopAlarm(int id) async {
-    await Alarm.stop(id);
+    // await Alarm.stop(id);
     // iOS'ta bildirimlerin temizlenmesi için kısa bir gecikme sonrası garanti durdurma
-    Future.delayed(const Duration(milliseconds: 500), () async {
-      if (await Alarm.isRinging(id)) {
-        await Alarm.stop(id);
-      }
-    });
+    // Future.delayed(const Duration(milliseconds: 500), () async {
+    //   if (await Alarm.isRinging(id)) {
+    //     await Alarm.stop(id);
+    //   }
+    // });
   }
 
   // Bir alarm henüz çalmadıysa ama iptal listesindeyse silmek için
   Future<void> cancelAlarm(int id) async {
-    await Alarm.stop(id);
+    // await Alarm.stop(id);
   }
 }

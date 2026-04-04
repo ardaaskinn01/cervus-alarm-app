@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+// import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
 import '../../models/alarm_model.dart';
@@ -38,7 +38,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
 
   @override
   void dispose() {
-    FlutterRingtonePlayer().stop();
+    // FlutterRingtonePlayer().stop();
     super.dispose();
   }
 
@@ -73,7 +73,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       );
       ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
-    FlutterRingtonePlayer().stop();
+    // FlutterRingtonePlayer().stop();
     Navigator.pop(context);
   }
 
@@ -227,12 +227,14 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       onTap: () {
         setState(() => selectedSound = path);
         // Önizleme çal
-        FlutterRingtonePlayer().stop(); // Varsa eskiyi durdur
+        // FlutterRingtonePlayer().stop(); // Varsa eskiyi durdur
+        /*
         FlutterRingtonePlayer().play(
           fromAsset: path,
           volume: 0.5,
           looping: false,
         );
+        */
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
