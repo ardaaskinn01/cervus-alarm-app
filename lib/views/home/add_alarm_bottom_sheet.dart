@@ -42,7 +42,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
     });
   }
 
-  void saveAlarm() {
+  Future<void> saveAlarm() async {
     if (widget.existingAlarm != null) {
       final updatedAlarm = widget.existingAlarm!.copyWith(
         hour: selectedTime.hour,
@@ -50,7 +50,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         repeatDays: selectedDays,
         isActive: true,
       );
-      ref.read(homeViewModelProvider.notifier).editAlarm(updatedAlarm);
+      await ref.read(homeViewModelProvider.notifier).editAlarm(updatedAlarm);
     } else {
       final newAlarm = AlarmModel(
         id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -59,9 +59,11 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         isActive: true,
         repeatDays: selectedDays,
       );
-      ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
+      await ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
-    Navigator.pop(context);
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override

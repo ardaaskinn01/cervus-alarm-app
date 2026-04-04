@@ -19,7 +19,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       await alarmService.scheduleAlarm(newAlarm);
     }
     
-    state = storage.getAlarms(); // refresh
+    state = [...storage.getAlarms()]; // Yeni liste referansı ile UI'ı zorla yenile
   }
 
   Future<void> editAlarm(AlarmModel updatedAlarm) async {
@@ -33,7 +33,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       await alarmService.scheduleAlarm(updatedAlarm);
     }
     
-    state = storage.getAlarms();
+    state = [...storage.getAlarms()];
   }
 
   Future<void> toggleAlarm(AlarmModel alarm, bool isActive) async {
@@ -49,7 +49,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       await alarmService.cancelAlarm(updatedAlarm.id);
     }
     
-    state = storage.getAlarms();
+    state = [...storage.getAlarms()];
   }
 
   Future<void> snoozeAlarm(int id) async {
@@ -67,7 +67,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       await storage.updateAlarm(snoozedAlarm);
       await alarmService.scheduleAlarm(snoozedAlarm);
       
-      state = storage.getAlarms();
+      state = [...storage.getAlarms()];
     } catch (_) {}
   }
 
@@ -77,7 +77,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     
     await alarmService.cancelAlarm(id);
     await storage.deleteAlarm(id);
-    state = storage.getAlarms();
+    state = [...storage.getAlarms()];
   }
 }
 
