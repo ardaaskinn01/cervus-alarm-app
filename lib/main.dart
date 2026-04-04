@@ -1,4 +1,4 @@
-import 'package:alarm/alarm.dart';
+// import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -7,8 +7,8 @@ import 'views/ringing/ringing_view.dart';
 import 'core/app_theme.dart';
 import 'services/local_storage_service.dart';
 import 'services/alarm_service.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'firebase_options.dart';
 import 'core/app_localizations.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -82,7 +82,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       debugPrint("🚀 Alarm bypassed for testing");
 
-      // 5. Alarm Dinleyicisi
+      /* 5. Alarm Dinleyicisi
       Alarm.ringing.listen((alarmSet) {
         final ringAlarm = alarmSet.alarms.firstOrNull;
         if (ringAlarm != null && mounted) {
@@ -93,6 +93,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           );
         }
       });
+      */
 
       // Her şey hazır!
       if (mounted) {
