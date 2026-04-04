@@ -2,18 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/local_storage_service.dart';
 
 final localeProvider = StateNotifierProvider<LocaleNotifier, String>((ref) {
-  final storage = ref.read(localStorageServiceProvider);
-  return LocaleNotifier(storage);
+  return LocaleNotifier();
 });
 
 class LocaleNotifier extends StateNotifier<String> {
-  final LocalStorageService _storage;
+  LocaleNotifier() : super('tr'); // Tamamen senkron başlangıç
 
-  LocaleNotifier(this._storage) : super(_storage.getLanguage());
-
-  Future<void> setLocale(String languageCode) async {
+  // Dili senkron olarak güncelleyen fonksiyon (Splash için)
+  void setLocaleSync(String languageCode) {
     state = languageCode;
-    await _storage.setLanguage(languageCode);
+  }
+
+  // Kullanıcı tercihi ile dili değiştiren ve kaydeden fonksiyon
+  Future<void> setLocale(String languageCode, LocalStorageService storage) async {
+    state = languageCode; // Arayüz anında değişir
+    await storage.setLanguage(languageCode); // Disk kaydı arka planda gerçekleşir
   }
 }
 

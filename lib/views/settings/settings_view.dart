@@ -28,7 +28,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   void _toggleLanguage() {
     final current = ref.read(localeProvider);
     final newLang = current == 'tr' ? 'en' : 'tr';
-    ref.read(localeProvider.notifier).setLocale(newLang);
+    final storage = ref.read(localStorageServiceProvider);
+    ref.read(localeProvider.notifier).setLocale(newLang, storage);
   }
 
   @override
