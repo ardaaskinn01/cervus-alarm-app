@@ -15,6 +15,10 @@ class LocaleNotifier extends StateNotifier<String> {
     state = languageCode;
     await _storage.setLanguage(languageCode);
   }
+
+  void setLocaleSync(String languageCode) {
+    state = languageCode;
+  }
 }
 
 class AppLocalizations {
