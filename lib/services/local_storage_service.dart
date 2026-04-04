@@ -2,9 +2,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
 
-// Riverpod provider for LocalStorageService (to be overridden in main)
+// Riverpod provider for LocalStorageService
 final localStorageServiceProvider = Provider<LocalStorageService>((ref) {
-  throw UnimplementedError();
+  return LocalStorageService();
 });
 
 class LocalStorageService {

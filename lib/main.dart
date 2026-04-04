@@ -1,7 +1,9 @@
 // import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'models/alarm_model.dart';
 import 'views/home/home_view.dart';
 import 'views/ringing/ringing_view.dart';
 import 'core/app_theme.dart';
@@ -13,8 +15,18 @@ import 'core/app_localizations.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Hive'ı burada, runApp öncesinde başlatıyoruz.
+  // LocalStorageService.init() çağrısına gerek kalmıyor.
+  await Hive.initFlutter();
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(AlarmModelAdapter());
+  }
+  await Hive.openBox<AlarmModel>('alarmsBox');
+  await Hive.openBox('settingsBox');
+
   runApp(
     const ProviderScope(
       child: AlarmApp(),
@@ -66,9 +78,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       debugPrint("🚀 Firebase bypassed for testing");
 
-      // 2. Local Storage (Hive)
-      final storageService = ref.read(localStorageServiceProvider);
-      await storageService.init().timeout(const Duration(seconds: 5));
+      // Hive zaten main()'de başlatıldı, burada tekrar init etmeye gerek yok.
+      debugPrint("✅ Storage hazır (main'de başlatıldı)");
 
       // --- DİL YÜKLEMESİ TAMAMEN SİLİNDİ ---
       // final savedLanguage = storageService.getLanguage();
