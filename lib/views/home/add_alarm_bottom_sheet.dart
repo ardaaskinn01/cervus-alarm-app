@@ -79,7 +79,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider);
+    final locale = 'tr'; // localeProvider kaldırıldı
 
     return Container(
       decoration: const BoxDecoration(

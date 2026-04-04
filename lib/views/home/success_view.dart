@@ -84,7 +84,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider);
+    final locale = 'tr'; // localeProvider kaldırıldı
     final int quoteIdx = int.parse(_todaysQuote);
     final int taskIdx = int.parse(_todaysTask);
     

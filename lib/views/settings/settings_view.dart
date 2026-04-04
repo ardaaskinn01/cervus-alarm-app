@@ -26,15 +26,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   }
 
   void _toggleLanguage() {
-    final current = ref.read(localeProvider);
-    final newLang = current == 'tr' ? 'en' : 'tr';
-    final storage = ref.read(localStorageServiceProvider);
-    ref.read(localeProvider.notifier).setLocale(newLang, storage);
+    // Dil sistemi tamamen söküldü
   }
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider);
+    final locale = 'tr'; // localeProvider kaldırıldı
 
     return Scaffold(
       extendBodyBehindAppBar: true,

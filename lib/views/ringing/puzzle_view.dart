@@ -79,7 +79,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     if (userAnswer == correctAnswer) {
       _showConfirmationDialog();
     } else {
-      final locale = ref.read(localeProvider);
+      final locale = 'tr'; // localeProvider kaldırıldı
       // Yanlış cevap verdi -> Yeniden oluştur, reklamı göster.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -92,7 +92,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
   }
 
   void _showConfirmationDialog() {
-    final locale = ref.read(localeProvider);
+    final locale = 'tr'; // localeProvider kaldırıldı
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -145,7 +145,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider);
+    final locale = 'tr'; // localeProvider kaldırıldı
 
     return Scaffold(
       extendBodyBehindAppBar: true,

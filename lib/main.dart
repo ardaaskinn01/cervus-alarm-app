@@ -70,10 +70,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final storageService = ref.read(localStorageServiceProvider);
       await storageService.init().timeout(const Duration(seconds: 5));
 
-      // --- DİL YÜKLEMESİ (SADECE BURADA ASENKRON GERÇEKLEŞİR) ---
-      // Splash screen açıkken disk okundu, şimdi dili anında güncelliyoruz.
-      final savedLanguage = storageService.getLanguage();
-      ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
+      // --- DİL YÜKLEMESİ TAMAMEN SİLİNDİ ---
+      // final savedLanguage = storageService.getLanguage();
+      // ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
 
       /* 3. Alarm Service (TEST İÇİN KAPALI)
       final alarmService = ref.read(alarmServiceProvider);

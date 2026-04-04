@@ -58,7 +58,7 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeProvider);
+    final locale = 'tr'; // localeProvider kaldırıldı
 
     return Scaffold(
       body: Container(

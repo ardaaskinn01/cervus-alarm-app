@@ -1,25 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/local_storage_service.dart';
-
-final localeProvider = StateNotifierProvider<LocaleNotifier, String>((ref) {
-  return LocaleNotifier();
-});
-
-class LocaleNotifier extends StateNotifier<String> {
-  LocaleNotifier() : super('tr'); // Tamamen senkron başlangıç
-
-  // Dili senkron olarak güncelleyen fonksiyon (Splash için)
-  void setLocaleSync(String languageCode) {
-    state = languageCode;
-  }
-
-  // Kullanıcı tercihi ile dili değiştiren ve kaydeden fonksiyon
-  Future<void> setLocale(String languageCode, LocalStorageService storage) async {
-    state = languageCode; // Arayüz anında değişir
-    await storage.setLanguage(languageCode); // Disk kaydı arka planda gerçekleşir
-  }
-}
-
 class AppLocalizations {
   static const Map<String, Map<String, String>> _localizedValues = {
     'tr': {
@@ -136,7 +114,7 @@ class AppLocalizations {
     },
   };
 
-  static String get(String key, String locale) {
-    return _localizedValues[locale]?[key] ?? _localizedValues['tr']?[key] ?? key;
+  static String get(String key, [dynamic dummy]) {
+    return _localizedValues['tr']?[key] ?? key;
   }
 }
