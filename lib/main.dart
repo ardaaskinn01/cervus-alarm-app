@@ -27,7 +27,7 @@ class AlarmApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(localeProvider);
+    // ref.watch(localeProvider); // KİLİTLENMEYİ ÖNLEMEK İÇİN GEÇİCİ OLARAK KAPALI
 
     return MaterialApp(
       navigatorKey: navigatorKey,
@@ -58,10 +58,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 100));
 
     try {
-      // 1. Firebase (Options ile ve Timeout ekli)
+      /* 1. Firebase (TEST İÇİN KAPALI)
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       ).timeout(const Duration(seconds: 8));
+      */
+
+      debugPrint("🚀 Firebase bypassed for testing");
 
       // 2. Local Storage (Hive)
       final storageService = ref.read(localStorageServiceProvider);
@@ -72,13 +75,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final savedLanguage = storageService.getLanguage();
       ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
 
-      // 3. Alarm Service
+      /* 3. Alarm Service (TEST İÇİN KAPALI)
       final alarmService = ref.read(alarmServiceProvider);
       await alarmService.init().timeout(const Duration(seconds: 5));
+      */
 
-      // 4. AdMob (Tamamen SplashScreen dışına çıkarıldı)
-      // iOS'u kilitlememesi için HomeView'de tetiklenecek.
-      // MobileAds.instance.initialize();
+      debugPrint("🚀 Alarm bypassed for testing");
 
       // 5. Alarm Dinleyicisi
       Alarm.ringing.listen((alarmSet) {
