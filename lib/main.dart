@@ -1,16 +1,15 @@
-// import 'package:alarm/alarm.dart';
+import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-// import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'models/alarm_model.dart';
 import 'views/home/home_view.dart';
 import 'views/ringing/ringing_view.dart';
 import 'core/app_theme.dart';
 import 'services/local_storage_service.dart';
 import 'services/alarm_service.dart';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/app_localizations.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -18,8 +17,7 @@ final navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Hive'ı burada, runApp öncesinde başlatıyoruz.
-  // LocalStorageService.init() çağrısına gerek kalmıyor.
+  // 1. SADECE EN KRİTİK VERİTABANINI BAŞLAT: (Bloklanmayı önlemek için)
   await Hive.initFlutter();
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(AlarmModelAdapter());
@@ -39,11 +37,12 @@ class AlarmApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ref.watch(localeProvider); // KİLİTLENMEYİ ÖNLEMEK İÇİN GEÇİCİ OLARAK KAPALI
+    // Dil değişikliklerini dinle
+    ref.watch(localeProvider);
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Cervus Alarm',
+      title: 'Zorlu Alarm',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),
@@ -51,6 +50,9 @@ class AlarmApp extends ConsumerWidget {
   }
 }
 
+// ==========================================
+// 🚀 ZERO-BLOCKING SPLASH SCREEN EKLENDİ
+// ==========================================
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -66,33 +68,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    // İlk karenin çizildiğinden emin olmak için çok kısa bir bekleme
-    await Future.delayed(const Duration(milliseconds: 100));
+    // İlk karenin çizilmesi için native motora zaman tanı
+    await Future.delayed(const Duration(milliseconds: 300));
 
     try {
-      /* 1. Firebase (TEST İÇİN KAPALI)
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(const Duration(seconds: 8));
-      */
+      // 2. FIREBASE BAŞLATMA
+      await Firebase.initializeApp();
 
-      debugPrint("🚀 Firebase bypassed for testing");
+      // 3. ADMOB BAŞLATMA
+      await MobileAds.instance.initialize();
 
-      // Hive zaten main()'de başlatıldı, burada tekrar init etmeye gerek yok.
-      debugPrint("✅ Storage hazır (main'de başlatıldı)");
-
-      // --- DİL YÜKLEMESİ TAMAMEN SİLİNDİ ---
-      // final savedLanguage = storageService.getLanguage();
-      // ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
-
-      /* 3. Alarm Service (TEST İÇİN KAPALI)
+      // 4. ALARM SERVİS BAŞLATMA
       final alarmService = ref.read(alarmServiceProvider);
-      await alarmService.init().timeout(const Duration(seconds: 5));
-      */
+      await alarmService.init();
 
-      debugPrint("🚀 Alarm bypassed for testing");
-
-      /* 5. Alarm Dinleyicisi
+      // 5. ALARM DİNLEYİCİ KAYDI
       Alarm.ringing.listen((alarmSet) {
         final ringAlarm = alarmSet.alarms.firstOrNull;
         if (ringAlarm != null && mounted) {
@@ -103,17 +93,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           );
         }
       });
-      */
 
-      // Her şey hazır!
+      // Dil senkronizasyonu
+      final storageService = ref.read(localStorageServiceProvider);
+      final savedLanguage = storageService.getLanguage();
+      ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
+
+      // Her şey yüklendi, ana ekrana geç.
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
         );
       }
     } catch (e) {
-      debugPrint("⚠️ Başlatma sırasında bir sorun çıktı: $e");
-      // Hata olsa bile ana sayfaya düşür ki beyaz ekran kalmasın
+      debugPrint("Başlatma sırasında hata: $e");
+      // Fallback: Hata olursa bile en azından uygulamaya gir
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),

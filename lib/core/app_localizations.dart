@@ -1,3 +1,22 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/local_storage_service.dart';
+
+final localeProvider = StateNotifierProvider<LocaleNotifier, String>((ref) {
+  final storage = ref.read(localStorageServiceProvider);
+  return LocaleNotifier(storage);
+});
+
+class LocaleNotifier extends StateNotifier<String> {
+  final LocalStorageService _storage;
+
+  LocaleNotifier(this._storage) : super(_storage.getLanguage());
+
+  Future<void> setLocale(String languageCode) async {
+    state = languageCode;
+    await _storage.setLanguage(languageCode);
+  }
+}
+
 class AppLocalizations {
   static const Map<String, Map<String, String>> _localizedValues = {
     'tr': {
@@ -18,10 +37,6 @@ class AppLocalizations {
       'add_new_title': 'Yeni Alarm',
       'add_repeat': 'Tekrarlama',
       'add_save': 'Kaydet',
-      'add_sound': 'Zil Sesi Seç',
-      'sound_soft': 'Yumuşak Çan',
-      'sound_hard': 'Sert Alarm',
-      'sound_modern': 'Modern Dijital',
 
       // SettingsView
       'settings_title': 'Ayarlar',
@@ -74,10 +89,6 @@ class AppLocalizations {
       'add_new_title': 'New Alarm',
       'add_repeat': 'Repeat',
       'add_save': 'Save',
-      'add_sound': 'Select Sound',
-      'sound_soft': 'Soft Bell',
-      'sound_hard': 'Hard Alarm',
-      'sound_modern': 'Modern Digital',
 
       // SettingsView
       'settings_title': 'Settings',
@@ -114,7 +125,7 @@ class AppLocalizations {
     },
   };
 
-  static String get(String key, [dynamic dummy]) {
-    return _localizedValues['tr']?[key] ?? key;
+  static String get(String key, String locale) {
+    return _localizedValues[locale]?[key] ?? _localizedValues['tr']?[key] ?? key;
   }
 }

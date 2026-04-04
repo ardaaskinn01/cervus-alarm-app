@@ -22,7 +22,7 @@ class HomeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alarms = ref.watch(homeViewModelProvider);
-    final locale = 'tr'; // localeProvider kaldırıldı
+    final locale = ref.watch(localeProvider);
 
     return Scaffold(
       appBar: AppBar(

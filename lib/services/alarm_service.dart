@@ -1,4 +1,4 @@
-// import 'package:alarm/alarm.dart';
+import 'package:alarm/alarm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
 import 'package:flutter/foundation.dart';
@@ -15,16 +15,17 @@ class AlarmService {
 
   AlarmService(this._storage);
   Future<void> init() async {
-    // await Alarm.init();
+    // alarm paketinin init işlemini yapıyoruz.
+    // iOS tarafında arkaplan yetkilerini kendi içinden Apple API'siyle sarmalar.
+    await Alarm.init();
     
-    // Geçmişte kalmış alarmları temizle (Bildirimlerin sonsuz kalmaması için)
-    // final allAlarms = await Alarm.getAlarms();
-    // final now = DateTime.now();
-    // for (var alarm in allAlarms) {
-    //   if (alarm.dateTime.isBefore(now)) {
-    //     await Alarm.stop(alarm.id);
-    //   }
-    // }
+    // iOS için bildirim (notification) isteği atalım.
+    if (Alarm.android) {
+       // Android implementation details here if we ever deploy it.
+    } else {
+       // Request permission for iOS mostly, handled natively by Alarm.hasSystemAlertWindowPermission
+       // Actually Alarm handles most checks automatically on `set`.
+    }
   }
 
   Future<void> scheduleAlarm(AlarmModel alarm) async {
@@ -46,15 +47,10 @@ class AlarmService {
     // TODO: repeatDays logic for scheduling (skipping non-selected days) 
     // This is a basic schedule for the very exact next occurrence.
 
-    final String alarmSound = alarm.soundPath == 'default' || alarm.soundPath.isEmpty
-        ? 'assets/audio/soft_alarm.mp3'
-        : alarm.soundPath;
-
-    /*
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
-      assetAudioPath: alarmSound,
+      assetAudioPath: 'assets/hard_alarm.mp3', // Özel alarm sesini kullanıyoruz
       volumeSettings: VolumeSettings.fade(
         volume: 1.0,
         fadeDuration: const Duration(seconds: 3),
@@ -71,24 +67,17 @@ class AlarmService {
       await Alarm.set(alarmSettings: alarmSettings);
     } catch (e) {
       if (kDebugMode) {
-        print("Alarm kurulamadı: $e");
+        print("Alarm kurulamadı: \$e");
       }
     }
-    */
   }
 
   Future<void> stopAlarm(int id) async {
-    // await Alarm.stop(id);
-    // iOS'ta bildirimlerin temizlenmesi için kısa bir gecikme sonrası garanti durdurma
-    // Future.delayed(const Duration(milliseconds: 500), () async {
-    //   if (await Alarm.isRinging(id)) {
-    //     await Alarm.stop(id);
-    //   }
-    // });
+    await Alarm.stop(id);
   }
 
   // Bir alarm henüz çalmadıysa ama iptal listesindeyse silmek için
   Future<void> cancelAlarm(int id) async {
-    // await Alarm.stop(id);
+    await Alarm.stop(id);
   }
 }
