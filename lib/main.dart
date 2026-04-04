@@ -1,7 +1,7 @@
 import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'views/home/home_view.dart';
 import 'views/ringing/ringing_view.dart';
 import 'core/app_theme.dart';

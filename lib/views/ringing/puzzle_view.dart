@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:math';
 import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
@@ -25,16 +25,16 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
   int correctAnswer = 0;
   String operatorText = '+';
 
-  BannerAd? _bannerAd;
+  // BannerAd? _bannerAd;
 
   // iOS için örnek deneme banner ID
-  final String _adUnitId = 'ca-app-pub-3940256099942544/2934735716';
+  // final String _adUnitId = 'ca-app-pub-3940256099942544/2934735716';
 
   @override
   void initState() {
     super.initState();
     _generatePuzzle();
-    _loadAds();
+    // _loadAds();
   }
 
   void _generatePuzzle() {
@@ -62,17 +62,17 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     setState(() {});
   }
 
-  void _loadAds() {
-    BannerAd(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
-      size: AdSize.banner,
-      listener: BannerAdListener(
-        onAdLoaded: (ad) => setState(() => _bannerAd = ad as BannerAd),
-        onAdFailedToLoad: (ad, err) => ad.dispose(),
-      ),
-    ).load();
-  }
+  // void _loadAds() {
+  //   BannerAd(
+  //     adUnitId: _adUnitId,
+  //     request: const AdRequest(),
+  //     size: AdSize.banner,
+  //     listener: BannerAdListener(
+  //       onAdLoaded: (ad) => setState(() => _bannerAd = ad as BannerAd),
+  //       onAdFailedToLoad: (ad, err) => ad.dispose(),
+  //     ),
+  //   ).load();
+  // }
 
   void _checkAnswer() {
     final int? userAnswer = int.tryParse(_answerController.text.trim());
@@ -139,7 +139,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
   @override
   void dispose() {
     _answerController.dispose();
-    _bannerAd?.dispose();
+    // _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -339,24 +339,24 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
               ),
               
               // Bottom Ad Section
-              if (_bannerAd != null)
-                Container(
-                  padding: const EdgeInsets.only(top: 8, bottom: 0),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    border: Border(
-                      top: BorderSide(color: Colors.white.withOpacity(0.1)),
-                    ),
-                  ),
-                  child: SizedBox(
-                    width: _bannerAd!.size.width.toDouble(),
-                    height: _bannerAd!.size.height.toDouble(),
-                    child: AdWidget(
-                      key: ObjectKey(_bannerAd),
-                      ad: _bannerAd!,
-                    ),
-                  ),
-                ),
+              // if (_bannerAd != null)
+              //   Container(
+              //     padding: const EdgeInsets.only(top: 8, bottom: 0),
+              //     decoration: BoxDecoration(
+              //       color: Colors.black.withOpacity(0.2),
+              //       border: Border(
+              //         top: BorderSide(color: Colors.white.withOpacity(0.1)),
+              //       ),
+              //     ),
+              //     child: SizedBox(
+              //       width: _bannerAd!.size.width.toDouble(),
+              //       height: _bannerAd!.size.height.toDouble(),
+              //       child: AdWidget(
+              //         key: ObjectKey(_bannerAd),
+              //         ad: _bannerAd!,
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
         ),
