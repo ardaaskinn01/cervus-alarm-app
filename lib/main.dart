@@ -76,8 +76,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final alarmService = ref.read(alarmServiceProvider);
       await alarmService.init().timeout(const Duration(seconds: 5));
 
-      // 4. AdMob (Async)
-      MobileAds.instance.initialize();
+      // 4. AdMob (Tamamen SplashScreen dışına çıkarıldı)
+      // iOS'u kilitlememesi için HomeView'de tetiklenecek.
+      // MobileAds.instance.initialize();
 
       // 5. Alarm Dinleyicisi
       Alarm.ringing.listen((alarmSet) {
