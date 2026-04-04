@@ -50,7 +50,7 @@ class AlarmService {
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
-      assetAudioPath: 'assets/hard_alarm.mp3', // Özel alarm sesini kullanıyoruz
+      assetAudioPath: 'assets/audio/hard_alarm.mp3', // Doğru path: audio/ alt klasörü
       volumeSettings: VolumeSettings.fade(
         volume: 1.0,
         fadeDuration: const Duration(seconds: 3),
