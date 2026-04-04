@@ -40,19 +40,22 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
   }
 
   void _onSnoozePressed(BuildContext context) {
+    // Erteleme için Puzzle'a git
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => PuzzleView(alarmId: widget.alarmId),
+        builder: (context) => PuzzleView(alarmId: widget.alarmId, isSnooze: true),
       ),
     );
   }
 
   void _onWakeUpPressed(BuildContext context, WidgetRef ref) {
-    ref.read(alarmServiceProvider).stopAlarm(widget.alarmId);
+    // Tamamen kapatmak için de Puzzle'a git
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const SuccessView()),
+      MaterialPageRoute(
+        builder: (context) => PuzzleView(alarmId: widget.alarmId, isSnooze: false),
+      ),
     );
   }
 

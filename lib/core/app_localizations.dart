@@ -40,6 +40,7 @@ class AppLocalizations {
       'add_edit_title': 'Alarmı Düzenle',
       'add_new_title': 'Yeni Alarm',
       'add_repeat': 'Tekrarlama',
+      'add_melody': 'Alarm Melodisi',
       'add_save': 'Kaydet',
 
       // SettingsView
@@ -92,6 +93,7 @@ class AppLocalizations {
       'add_edit_title': 'Edit Alarm',
       'add_new_title': 'New Alarm',
       'add_repeat': 'Repeat',
+      'add_melody': 'Alarm Melody',
       'add_save': 'Save',
 
       // SettingsView

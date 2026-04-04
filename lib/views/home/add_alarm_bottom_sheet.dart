@@ -5,6 +5,7 @@ import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
 import '../../models/alarm_model.dart';
 import '../../viewmodels/home_viewmodel.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart'; // Önizleme için
 
 class AddAlarmBottomSheet extends ConsumerStatefulWidget {
   final AlarmModel? existingAlarm;
@@ -18,6 +19,7 @@ class AddAlarmBottomSheet extends ConsumerStatefulWidget {
 class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   late DateTime selectedTime;
   late List<int> selectedDays;
+  late String selectedSound; // Yeni: Ses seçimi
 
   @override
   void initState() {
@@ -26,9 +28,11 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       final now = DateTime.now();
       selectedTime = DateTime(now.year, now.month, now.day, widget.existingAlarm!.hour, widget.existingAlarm!.minute);
       selectedDays = List.from(widget.existingAlarm!.repeatDays);
+      selectedSound = widget.existingAlarm!.soundPath;
     } else {
       selectedTime = DateTime.now();
       selectedDays = [];
+      selectedSound = 'assets/audio/hard_alarm.mp3'; // Varsayılan ses
     }
   }
 
@@ -48,6 +52,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         hour: selectedTime.hour,
         minute: selectedTime.minute,
         repeatDays: selectedDays,
+        soundPath: selectedSound, // Seçilen sesi kaydet
         isActive: true,
       );
       await ref.read(homeViewModelProvider.notifier).editAlarm(updatedAlarm);
@@ -58,6 +63,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         minute: selectedTime.minute,
         isActive: true,
         repeatDays: selectedDays,
+        soundPath: selectedSound, // Seçilen sesi kaydet
       );
       await ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
@@ -168,6 +174,25 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                     )
                 ],
               ),
+              const SizedBox(height: 24),
+              // Melody Selector (New)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  AppLocalizations.get('add_melody', locale), // add_melody lokalizasyonu gerekiyor
+                  style: const TextStyle(fontSize: 16, color: Colors.white70),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _melodyChip('Hard', 'assets/audio/hard_alarm.mp3'),
+                  const SizedBox(width: 12),
+                  _melodyChip('Soft', 'assets/audio/soft_alarm.mp3'),
+                  const SizedBox(width: 12),
+                  _melodyChip('Modern', 'assets/audio/modern_alarm.mp3'),
+                ],
+              ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -184,5 +209,42 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
     );
   }
 
-  // _getDayChar method removed as it's handled by AppLocalizations
+  Widget _melodyChip(String label, String path) {
+    final bool isSelected = selectedSound == path;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedSound = path;
+        });
+        // 🎵 Ses Önizleme (Preview)
+        try {
+          FlutterRingtonePlayer().stop(); // Varsa çalan sesi durdur
+          FlutterRingtonePlayer().play(
+            fromAsset: path, // Seçilen sesi çal
+            looping: false,
+            volume: 0.8,
+          );
+        } catch (e) {
+          debugPrint("Ses çalınamadı: $e");
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.secondaryColor : Colors.white12,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.white24 : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white54,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
 }

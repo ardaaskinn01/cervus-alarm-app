@@ -47,19 +47,30 @@ class AlarmService {
     // TODO: repeatDays logic for scheduling (skipping non-selected days) 
     // This is a basic schedule for the very exact next occurrence.
 
+    // Seçilen melodi ismini al, boşsa veya default ise hard_alarm.mp3'e düş
+    String audioPathAsset = 'assets/audio/hard_alarm.mp3';
+    if (alarm.soundPath == 'soft_alarm' || alarm.soundPath == 'assets/audio/soft_alarm.mp3') {
+       audioPathAsset = 'assets/audio/soft_alarm.mp3';
+    } else if (alarm.soundPath == 'modern_alarm' || alarm.soundPath == 'assets/audio/modern_alarm.mp3') {
+       audioPathAsset = 'assets/audio/modern_alarm.mp3';
+    }
+
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
-      assetAudioPath: 'assets/audio/hard_alarm.mp3', // Doğru path: audio/ alt klasörü
+      assetAudioPath: audioPathAsset, // Dinamik melodi seçimi
       volumeSettings: VolumeSettings.fade(
         volume: 1.0,
         fadeDuration: const Duration(seconds: 3),
         volumeEnforced: true,
       ),
       vibrate: _storage.getGlobalVibrate(),
+      warningNotificationOnKill: true, // Uygulama öldürülürse uyarı bildirimi gönder
       notificationSettings: const NotificationSettings(
-        title: "Uyanma Vakti!",
-        body: "Bu alarmı ertelemek veya kapatmak için soru çözmen gerek.",
+        title: "Zorlu Alarm - Uyanma Vakti!",
+        body: "Günün başlıyor, hadi ayılma vakti!",
+        stopButton: null, // Sorun ihtimalini azaltmak için butonu kaldırıyoruz
+        icon: null, // Varsayılan uygulama ikonunu kullanması için null bıraktık
       ),
     );
 

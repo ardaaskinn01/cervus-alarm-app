@@ -32,11 +32,42 @@ void main() async {
   );
 }
 
-class AlarmApp extends ConsumerWidget {
+// ==========================================
+// 🚀 GLOBAL ALARM DİNLEYİCİSİ BURAYA TAŞINDI
+// ==========================================
+class AlarmApp extends ConsumerStatefulWidget {
   const AlarmApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AlarmApp> createState() => _AlarmAppState();
+}
+
+class _AddAlarmBottomSheetState {} // Unused but preventing delete
+
+class _AlarmAppState extends ConsumerState<AlarmApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupAlarmListener();
+  }
+
+  void _setupAlarmListener() {
+    // 🔔 UYGULAMA BOYUNCA HAYATTA KALACAK DİNLEYİCİ
+    Alarm.ringing.listen((alarmSet) {
+      final ringAlarm = alarmSet.alarms.firstOrNull;
+      if (ringAlarm != null) {
+        // NavigatorKey sayesinde her yerden yönlendirme yapabiliriz
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => RingingView(alarmId: ringAlarm.id),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Dil değişikliklerini dinle
     ref.watch(localeProvider);
 
@@ -51,7 +82,7 @@ class AlarmApp extends ConsumerWidget {
 }
 
 // ==========================================
-// 🚀 ZERO-BLOCKING SPLASH SCREEN EKLENDİ
+// 🚀 ZERO-BLOCKING SPLASH SCREEN
 // ==========================================
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -82,18 +113,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final alarmService = ref.read(alarmServiceProvider);
       await alarmService.init();
 
-      // 5. ALARM DİNLEYİCİ KAYDI
-      Alarm.ringing.listen((alarmSet) {
-        final ringAlarm = alarmSet.alarms.firstOrNull;
-        if (ringAlarm != null && mounted) {
-          navigatorKey.currentState?.push(
-            MaterialPageRoute(
-              builder: (context) => RingingView(alarmId: ringAlarm.id),
-            ),
-          );
-        }
-      });
-
       // Dil senkronizasyonu
       final storageService = ref.read(localStorageServiceProvider);
       final savedLanguage = storageService.getLanguage();
@@ -107,7 +126,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
     } catch (e) {
       debugPrint("Başlatma sırasında hata: $e");
-      // Fallback: Hata olursa bile en azından uygulamaya gir
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),

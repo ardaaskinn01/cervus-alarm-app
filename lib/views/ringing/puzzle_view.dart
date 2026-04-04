@@ -10,8 +10,13 @@ import '../home/success_view.dart';
 
 class PuzzleView extends ConsumerStatefulWidget {
   final int alarmId;
+  final bool isSnooze; // Yeni: Erteleme mi yoksa Kapatma mı?
 
-  const PuzzleView({Key? key, required this.alarmId}) : super(key: key);
+  const PuzzleView({
+    Key? key, 
+    required this.alarmId, 
+    this.isSnooze = false,
+  }) : super(key: key);
 
   @override
   ConsumerState<PuzzleView> createState() => _PuzzleViewState();
@@ -27,7 +32,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
 
   BannerAd? _bannerAd;
 
-  // iOS için örnek deneme banner ID
+  // Test Banner ID
   final String _adUnitId = 'ca-app-pub-3940256099942544/2934735716';
 
   @override
@@ -45,7 +50,6 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     num2 = random.nextInt(30) + 1; // 1-30
 
     if (isSubtraction) {
-      // Ensure positive result
       if (num1 < num2) {
         final temp = num1;
         num1 = num2;
@@ -74,13 +78,28 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     ).load();
   }
 
-  void _checkAnswer() {
+  Future<void> _checkAnswer() async {
     final int? userAnswer = int.tryParse(_answerController.text.trim());
     if (userAnswer == correctAnswer) {
-      _showConfirmationDialog();
+      // 🎯 DOĞRU CEVAP!
+      if (widget.isSnooze) {
+        // Erteleme Modu
+        await ref.read(homeViewModelProvider.notifier).snoozeAlarm(widget.alarmId);
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } else {
+        // Kapatma Modu
+        await ref.read(alarmServiceProvider).stopAlarm(widget.alarmId);
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SuccessView()),
+          );
+        }
+      }
     } else {
       final locale = ref.read(localeProvider);
-      // Yanlış cevap verdi -> Yeniden oluştur, reklamı göster.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.get('puzzle_wrong', locale)),
@@ -89,51 +108,6 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
       );
       _generatePuzzle();
     }
-  }
-
-  void _showConfirmationDialog() {
-    final locale = ref.read(localeProvider);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: AppTheme.cardColor,
-          title: Text(AppLocalizations.get('puzzle_dialog_title', locale), style: const TextStyle(color: Colors.white)),
-          content: Text(
-            AppLocalizations.get('puzzle_dialog_content', locale),
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final alarmId = widget.alarmId;
-                await ref.read(alarmServiceProvider).stopAlarm(alarmId);
-                if (mounted) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SuccessView()),
-                  );
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.greenAccent),
-              child: Text(AppLocalizations.get('puzzle_dialog_close', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            TextButton(
-              onPressed: () async {
-                final alarmId = widget.alarmId;
-                await ref.read(homeViewModelProvider.notifier).snoozeAlarm(alarmId);
-                if (mounted) {
-                  Navigator.of(ctx).popUntil((route) => route.isFirst);
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.white54),
-              child: Text(AppLocalizations.get('puzzle_dialog_snooze', locale)),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -151,6 +125,8 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Text(AppLocalizations.get('puzzle_appbar', locale)),
         centerTitle: true,
       ),
@@ -178,7 +154,6 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
                   child: Column(
                     children: [
                       const SizedBox(height: 40),
-                      // Brain Icon / Illustration Area
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -189,11 +164,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
                             width: 2,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.psychology,
-                          size: 80,
-                          color: Colors.white,
-                        ),
+                        child: const Icon(Icons.psychology, size: 80, color: Colors.white),
                       ),
                       const SizedBox(height: 48),
                       
@@ -204,9 +175,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(32),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
-                          ),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
                         child: Column(
                           children: [
@@ -226,136 +195,74 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
                                 fontSize: 64,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black26,
-                                    offset: Offset(0, 4),
-                                    blurRadius: 10,
-                                  ),
-                                ],
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              '=',
-                              style: TextStyle(
-                                fontSize: 40,
-                                color: Colors.white.withOpacity(0.4),
-                              ),
-                            ),
+                            Text('=', style: TextStyle(fontSize: 40, color: Colors.white.withOpacity(0.4))),
                           ],
                         ),
                       ),
                       
                       const SizedBox(height: 48),
                       
-                      // Answer Input area
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-                            child: Text(
-                              AppLocalizations.get('puzzle_answer', locale),
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
+                      // Answer Input
+                      TextField(
+                        controller: _answerController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        autofocus: true,
+                        style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          hintText: '???',
+                          hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.05),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 24),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                           ),
-                          TextField(
-                            controller: _answerController,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            autofocus: true,
-                            style: const TextStyle(
-                              fontSize: 32, 
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: '???',
-                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.05),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 24),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-                              ),
-                            ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
                           ),
-                        ],
+                        ),
                       ),
                       
                       const SizedBox(height: 48),
                       
                       // Control Button
-                      Container(
+                      SizedBox(
                         width: double.infinity,
                         height: 70,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: const LinearGradient(
-                            colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: const LinearGradient(colors: [AppTheme.primaryColor, AppTheme.secondaryColor]),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
+                          child: ElevatedButton(
+                            onPressed: _checkAnswer,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _checkAnswer,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: Text(
-                            AppLocalizations.get('puzzle_check', locale),
-                            style: const TextStyle(
-                              fontSize: 18, 
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.w800,
+                            child: Text(
+                              AppLocalizations.get('puzzle_check', locale),
+                              style: const TextStyle(fontSize: 18, letterSpacing: 2, fontWeight: FontWeight.w800),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
-              
-              // Bottom Ad Section
               if (_bannerAd != null)
-                Container(
-                  padding: const EdgeInsets.only(top: 8, bottom: 0),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    border: Border(
-                      top: BorderSide(color: Colors.white.withOpacity(0.1)),
-                    ),
-                  ),
-                  child: SizedBox(
-                    width: _bannerAd!.size.width.toDouble(),
-                    height: _bannerAd!.size.height.toDouble(),
-                    child: AdWidget(
-                      key: ObjectKey(_bannerAd),
-                      ad: _bannerAd!,
-                    ),
-                  ),
+                SizedBox(
+                  width: _bannerAd!.size.width.toDouble(),
+                  height: _bannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _bannerAd!),
                 ),
             ],
           ),
