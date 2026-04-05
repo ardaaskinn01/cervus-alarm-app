@@ -16,23 +16,8 @@ class AlarmService {
 
   Future<void> init() async {
     // alarm paketini iOS ve Android için hazırla
+    // Paketin bu sürümü izinleri Alarm.set sırasında veya init içinde halleder
     await Alarm.init();
-    
-    if (kIsWeb) return;
-    
-    // iOS tarafında arkaplan izni ve kritik uyarı talebi
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      await _requestPermissions();
-    }
-  }
-
-  Future<void> _requestPermissions() async {
-    // iOS 15+ için bildirim ve kritik uyarı (silent bypass) talebi
-    final hasPermission = await Alarm.hasPermission();
-    if (!hasPermission) {
-      // Bu çağrı iOS sistem penceresini (Alert) tetikler.
-      await Alarm.hasPermission();
-    }
   }
 
   Future<void> scheduleAlarm(AlarmModel alarm) async {
