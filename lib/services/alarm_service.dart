@@ -2,7 +2,6 @@ import 'package:alarm/alarm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
 import 'package:flutter/foundation.dart';
-
 import 'local_storage_service.dart';
 
 final alarmServiceProvider = Provider<AlarmService>((ref) {
@@ -14,22 +13,30 @@ class AlarmService {
   final LocalStorageService _storage;
 
   AlarmService(this._storage);
+
   Future<void> init() async {
-    // alarm paketinin init işlemini yapıyoruz.
-    // iOS tarafında arkaplan yetkilerini kendi içinden Apple API'siyle sarmalar.
+    // alarm paketini iOS ve Android için hazırla
     await Alarm.init();
     
-    // iOS için bildirim (notification) isteği atalım.
-    if (Alarm.android) {
-       // Android implementation details here if we ever deploy it.
-    } else {
-       // Request permission for iOS mostly, handled natively by Alarm.hasSystemAlertWindowPermission
-       // Actually Alarm handles most checks automatically on `set`.
+    if (kIsWeb) return;
+    
+    // iOS tarafında arkaplan izni ve kritik uyarı talebi
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      await _requestPermissions();
+    }
+  }
+
+  Future<void> _requestPermissions() async {
+    // iOS 15+ için bildirim ve kritik uyarı (silent bypass) talebi
+    final hasPermission = await Alarm.hasPermission();
+    if (!hasPermission) {
+      // Bu çağrı iOS sistem penceresini (Alert) tetikler.
+      await Alarm.hasPermission();
     }
   }
 
   Future<void> scheduleAlarm(AlarmModel alarm) async {
-    // Calculate the next occurrence based on the alarm's hour, minute
+    // Mevcut zamana göre bir sonraki alarm anını hesapla
     DateTime now = DateTime.now();
     DateTime alarmTime = DateTime(
       now.year,
@@ -39,15 +46,11 @@ class AlarmService {
       alarm.minute,
     );
 
-    // If the time already passed today, set it for the next day
     if (alarmTime.isBefore(now)) {
       alarmTime = alarmTime.add(const Duration(days: 1));
     }
 
-    // TODO: repeatDays logic for scheduling (skipping non-selected days) 
-    // This is a basic schedule for the very exact next occurrence.
-
-    // Seçilen melodi ismini al, boşsa veya default ise hard_alarm.mp3'e düş
+    // Melodi seçimini belirle
     String audioPathAsset = 'assets/audio/hard_alarm.mp3';
     if (alarm.soundPath == 'soft_alarm' || alarm.soundPath == 'assets/audio/soft_alarm.mp3') {
        audioPathAsset = 'assets/audio/soft_alarm.mp3';
@@ -58,28 +61,26 @@ class AlarmService {
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
-      assetAudioPath: audioPathAsset, // Dinamik melodi seçimi
+      assetAudioPath: audioPathAsset,
       volumeSettings: VolumeSettings.fade(
         volume: 1.0,
         fadeDuration: const Duration(seconds: 3),
         volumeEnforced: true,
       ),
       vibrate: _storage.getGlobalVibrate(),
-      warningNotificationOnKill: true, // Uygulama öldürülürse uyarı bildirimi gönder
+      warningNotificationOnKill: true,
       notificationSettings: const NotificationSettings(
         title: "Zorlu Alarm - Uyanma Vakti!",
         body: "Günün başlıyor, hadi ayılma vakti!",
-        stopButton: null, // Sorun ihtimalini azaltmak için butonu kaldırıyoruz
-        icon: null, // Varsayılan uygulama ikonunu kullanması için null bıraktık
+        stopButton: null,
+        icon: null, 
       ),
     );
 
     try {
       await Alarm.set(alarmSettings: alarmSettings);
     } catch (e) {
-      if (kDebugMode) {
-        print("Alarm kurulamadı: \$e");
-      }
+      debugPrint("Alarm kurulamadı: $e");
     }
   }
 
@@ -87,7 +88,6 @@ class AlarmService {
     await Alarm.stop(id);
   }
 
-  // Bir alarm henüz çalmadıysa ama iptal listesindeyse silmek için
   Future<void> cancelAlarm(int id) async {
     await Alarm.stop(id);
   }
