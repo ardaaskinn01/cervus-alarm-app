@@ -50,15 +50,15 @@ class AlarmService {
       volumeSettings: VolumeSettings.fade(
         volume: 1.0,
         fadeDuration: const Duration(seconds: 3),
-        volumeEnforced: true,
+        volumeEnforced: false, // iOS'ta true kullanmak ses sistemini bloklayabiliyor
       ),
       vibrate: _storage.getGlobalVibrate(),
       warningNotificationOnKill: true,
       notificationSettings: const NotificationSettings(
         title: "Zorlu Alarm - Uyanma Vakti!",
         body: "Günün başlıyor, hadi ayılma vakti!",
-        stopButton: null,
-        icon: null, 
+        stopButton: "Durdur", // iOS'ta null bırakmak notification kurulumunu bozabilir
+        icon: null,
       ),
     );
 

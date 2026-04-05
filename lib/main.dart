@@ -17,7 +17,10 @@ final navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. SADECE EN KRİTİK VERİTABANINI BAŞLAT: (Bloklanmayı önlemek için)
+  // 1. ALARM PAKETİNİ EN ÖNCE BAŞLAT (stream dinleyicisinden önce hazır olmalı)
+  await Alarm.init();
+
+  // 2. SADECE EN KRİTİK VERİTABANINI BAŞLAT: (Bloklanmayı önlemek için)
   await Hive.initFlutter();
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(AlarmModelAdapter());
@@ -109,9 +112,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // 3. ADMOB BAŞLATMA
       await MobileAds.instance.initialize();
 
-      // 4. ALARM SERVİS BAŞLATMA
-      final alarmService = ref.read(alarmServiceProvider);
-      await alarmService.init();
+      // NOT: Alarm.init() artık main() içinde çağrılıyor, burada tekrar çağırmaya gerek yok.
 
       // Dil senkronizasyonu
       final storageService = ref.read(localStorageServiceProvider);
