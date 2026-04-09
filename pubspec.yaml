@@ -44,6 +44,7 @@ dependencies:
   flutter_ringtone_player: ^4.0.0+4
   alarm: ^5.1.5
   firebase_core: ^4.6.0
+  math_expressions: ^3.0.0
   
 
 dev_dependencies:

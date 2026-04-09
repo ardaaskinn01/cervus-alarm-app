@@ -39,6 +39,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <!-- AdMob App ID. REPLACE with your real AdMob App ID before publishing!
              Real format: ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX
              Get it from: https://apps.admob.com -->

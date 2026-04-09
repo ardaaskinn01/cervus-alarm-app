@@ -35,6 +35,8 @@ void main() async {
   );
 }
 
+final ValueNotifier<bool> isAppReady = ValueNotifier<bool>(false);
+
 // ==========================================
 // 🚀 GLOBAL ALARM DİNLEYİCİSİ BURAYA TAŞINDI
 // ==========================================
@@ -55,18 +57,31 @@ class _AlarmAppState extends ConsumerState<AlarmApp> {
   }
 
   void _setupAlarmListener() {
+    // Dinleyici ekleme fonksiyonunu ayırıyoruz
+    void attachStream() {
+      Alarm.ringing.listen((alarmSet) {
+        final ringAlarm = alarmSet.alarms.firstOrNull;
+        if (ringAlarm != null) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (context) => RingingView(alarmId: ringAlarm.id),
+            ),
+          );
+        }
+      });
+    }
+
     // 🔔 UYGULAMA BOYUNCA HAYATTA KALACAK DİNLEYİCİ
-    Alarm.ringing.listen((alarmSet) {
-      final ringAlarm = alarmSet.alarms.firstOrNull;
-      if (ringAlarm != null) {
-        // NavigatorKey sayesinde her yerden yönlendirme yapabiliriz
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(
-            builder: (context) => RingingView(alarmId: ringAlarm.id),
-          ),
-        );
-      }
-    });
+    // Uygulama tam açılmadan önce (örn. SplashScreen bitmeden) yönlendirme yapmamak için bekliyoruz.
+    if (isAppReady.value) {
+      attachStream();
+    } else {
+      isAppReady.addListener(() {
+        if (isAppReady.value) {
+          attachStream();
+        }
+      });
+    }
   }
 
   @override
@@ -124,6 +139,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
         );
+        isAppReady.value = true;
       }
     } catch (e) {
       debugPrint("Başlatma sırasında hata: $e");
@@ -131,6 +147,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
         );
+        isAppReady.value = true;
       }
     }
   }
@@ -147,3 +164,4 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     );
   }
 }
+

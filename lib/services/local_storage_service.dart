@@ -65,4 +65,31 @@ class LocalStorageService {
   Future<void> setLanguage(String lang) async {
     await Hive.box(_settingsBoxName).put('language', lang);
   }
+
+  int getPuzzleQuestionCount() {
+    return Hive.box(_settingsBoxName).get('puzzle_question_count', defaultValue: 1);
+  }
+
+  Future<void> setPuzzleQuestionCount(int count) async {
+    await Hive.box(_settingsBoxName).put('puzzle_question_count', count);
+  }
+
+  List<Map<String, dynamic>> getCustomQuestions() {
+    final list = Hive.box(_settingsBoxName).get('custom_questions', defaultValue: []);
+    return List<Map<String, dynamic>>.from(list.map((e) => Map<String, dynamic>.from(e)));
+  }
+
+  Future<void> addCustomQuestion(String question, int answer) async {
+    final list = getCustomQuestions();
+    list.add({'q': question, 'a': answer});
+    await Hive.box(_settingsBoxName).put('custom_questions', list);
+  }
+
+  Future<void> removeCustomQuestion(int index) async {
+    final list = getCustomQuestions();
+    if (index >= 0 && index < list.length) {
+      list.removeAt(index);
+      await Hive.box(_settingsBoxName).put('custom_questions', list);
+    }
+  }
 }

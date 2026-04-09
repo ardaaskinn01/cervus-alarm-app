@@ -69,41 +69,53 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              AppTheme.backgroundColor,
-              AppTheme.secondaryColor,
-              AppTheme.backgroundColor,
+              Color(0xFF09090E),
+              Color(0xFF160E30),
+              Color(0xFF2D1146),
+              Color(0xFF09090E),
             ],
-            stops: [0.0, 0.5, 1.0],
+            stops: [0.0, 0.4, 0.8, 1.0],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
               const Spacer(),
-              ScaleTransition(
-                scale: _pulseAnimation,
-                child: Container(
-                  padding: const EdgeInsets.all(40),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.05),
-                        blurRadius: 40,
-                        spreadRadius: 20,
+              AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  final scale = _pulseAnimation.value;
+                  return Container(
+                    padding: const EdgeInsets.all(50),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.secondaryColor.withOpacity(0.3 * (1.3 - scale)),
+                          blurRadius: 40 * scale,
+                          spreadRadius: 20 * scale,
+                        ),
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withOpacity(0.2 * (1.3 - scale)),
+                          blurRadius: 80 * scale,
+                          spreadRadius: 40 * scale,
+                        ),
+                      ],
+                    ),
+                    child: Transform.scale(
+                      scale: scale,
+                      child: const Icon(
+                        Icons.notifications_active_rounded,
+                        size: 100,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.notifications_active_rounded,
-                    size: 120,
-                    color: Colors.white,
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 60),
               Text(

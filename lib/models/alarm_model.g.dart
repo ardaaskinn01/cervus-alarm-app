@@ -23,13 +23,15 @@ class AlarmModelAdapter extends TypeAdapter<AlarmModel> {
       isActive: fields[3] as bool,
       repeatDays: (fields[4] as List).cast<int>(),
       soundPath: fields[5] as String,
+      vibrate: fields[6] as bool,
+      label: fields[7] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, AlarmModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +43,11 @@ class AlarmModelAdapter extends TypeAdapter<AlarmModel> {
       ..writeByte(4)
       ..write(obj.repeatDays)
       ..writeByte(5)
-      ..write(obj.soundPath);
+      ..write(obj.soundPath)
+      ..writeByte(6)
+      ..write(obj.vibrate)
+      ..writeByte(7)
+      ..write(obj.label);
   }
 
   @override

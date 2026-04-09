@@ -25,6 +25,9 @@ class AlarmModel extends HiveObject {
   @HiveField(6)
   bool vibrate;
 
+  @HiveField(7)
+  String label;
+
   AlarmModel({
     required this.id,
     required this.hour,
@@ -33,6 +36,7 @@ class AlarmModel extends HiveObject {
     this.repeatDays = const [],
     this.soundPath = 'default',
     this.vibrate = true,
+    this.label = '',
   });
 
   // To JSON
@@ -45,6 +49,7 @@ class AlarmModel extends HiveObject {
       'repeatDays': repeatDays,
       'soundPath': soundPath,
       'vibrate': vibrate,
+      'label': label,
     };
   }
 
@@ -58,6 +63,7 @@ class AlarmModel extends HiveObject {
       repeatDays: List<int>.from(json['repeatDays'] ?? []),
       soundPath: json['soundPath'] ?? 'default',
       vibrate: json['vibrate'] ?? true,
+      label: json['label'] ?? '',
     );
   }
 
@@ -69,6 +75,7 @@ class AlarmModel extends HiveObject {
     List<int>? repeatDays,
     String? soundPath,
     bool? vibrate,
+    String? label,
   }) {
     return AlarmModel(
       id: id ?? this.id,
@@ -78,6 +85,7 @@ class AlarmModel extends HiveObject {
       repeatDays: repeatDays ?? this.repeatDays,
       soundPath: soundPath ?? this.soundPath,
       vibrate: vibrate ?? this.vibrate,
+      label: label ?? this.label,
     );
   }
 }

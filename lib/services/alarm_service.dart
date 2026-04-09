@@ -57,7 +57,7 @@ class AlarmService {
       notificationSettings: const NotificationSettings(
         title: "Zorlu Alarm - Uyanma Vakti!",
         body: "Günün başlıyor, hadi ayılma vakti!",
-        stopButton: "Durdur", // iOS'ta null bırakmak notification kurulumunu bozabilir
+        stopButton: null,
         icon: null,
       ),
     );

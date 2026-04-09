@@ -42,6 +42,7 @@ class AppLocalizations {
       'add_repeat': 'Tekrarlama',
       'add_melody': 'Alarm Melodisi',
       'add_save': 'Kaydet',
+      'add_label': 'Alarm Etiketi',
 
       // SettingsView
       'settings_title': 'Ayarlar',
@@ -53,6 +54,16 @@ class AppLocalizations {
       'settings_language_subtitle': 'Türkçe / English',
       'settings_privacy_title': 'Gizlilik Politikası',
       'settings_privacy_subtitle': 'Verileriniz ve gizliliğiniz',
+      'settings_puzzle_count_title': 'Soru Sayısı',
+      'settings_puzzle_count_subtitle': 'Alarmı kapatmak için çözülecek soru',
+      'settings_custom_q_title': 'Özel Soru Ekle',
+      'settings_custom_q_subtitle': 'Kendi sormak istediğin sorular',
+      'custom_q_add_title': 'Soru Ekle',
+      'custom_q_q_hint': 'Soru (Örn: 15 + 45)',
+      'custom_q_a_hint': 'Cevap (Örn: 60)',
+      'custom_q_save': 'Kaydet',
+      'custom_q_cancel': 'İptal',
+      'custom_q_invalid': 'Geçerli bir soru ve sayısal cevap girin.',
 
       // PuzzleView
       'puzzle_wrong': 'Yanlış! Baştan başlıyoruz.',
@@ -95,6 +106,7 @@ class AppLocalizations {
       'add_repeat': 'Repeat',
       'add_melody': 'Alarm Melody',
       'add_save': 'Save',
+      'add_label': 'Alarm Label',
 
       // SettingsView
       'settings_title': 'Settings',
@@ -106,6 +118,16 @@ class AppLocalizations {
       'settings_language_subtitle': 'English / Türkçe',
       'settings_privacy_title': 'Privacy Policy',
       'settings_privacy_subtitle': 'Your data and privacy',
+      'settings_puzzle_count_title': 'Question Count',
+      'settings_puzzle_count_subtitle': 'Number of questions to solve to wake up',
+      'settings_custom_q_title': 'Add Custom Question',
+      'settings_custom_q_subtitle': 'Your own questions',
+      'custom_q_add_title': 'Add Question',
+      'custom_q_q_hint': 'Question (e.g. 15 + 45)',
+      'custom_q_a_hint': 'Answer (e.g. 60)',
+      'custom_q_save': 'Save',
+      'custom_q_cancel': 'Cancel',
+      'custom_q_invalid': 'Please enter a valid question and a numeric answer.',
 
       // PuzzleView
       'puzzle_wrong': 'Wrong! Let\'s start over.',
