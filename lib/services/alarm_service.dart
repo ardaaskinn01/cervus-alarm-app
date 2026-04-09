@@ -36,9 +36,9 @@ class AlarmService {
 
     final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     const initializationSettingsIOS = DarwinInitializationSettings(
-      requestAlertPermission: false, 
-      requestBadgePermission: false, 
-      requestSoundPermission: false,
+      requestAlertPermission: true, 
+      requestBadgePermission: true, 
+      requestSoundPermission: true,
     );
     const initializationSettings = InitializationSettings(
       iOS: initializationSettingsIOS,

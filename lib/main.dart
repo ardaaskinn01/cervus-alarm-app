@@ -129,7 +129,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // 3. ADMOB BAŞLATMA
       await MobileAds.instance.initialize();
 
-      // 4. BİLDİRİM İZİNLERİNİ İSTE (iOS arka plan alarmları için hayati)
+      // 4. BİLDİRİM VE TİMEZONE BAŞLATMA (Çok kritik, aksi halde izinler ve yedek bildirimler çalışmaz)
+      await ref.read(alarmServiceProvider).init();
+
+      // 5. BİLDİRİM İZİNLERİNİ İSTE (iOS arka plan alarmları için güvence)
       if (Platform.isIOS) {
         final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
         await flutterLocalNotificationsPlugin
@@ -140,8 +143,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               sound: true,
             );
       }
-
-      // NOT: Alarm.init() artık main() içinde çağrılıyor, burada tekrar çağırmaya gerek yok.
 
       // Dil senkronizasyonu
       final storageService = ref.read(localStorageServiceProvider);
