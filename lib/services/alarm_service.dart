@@ -1,3 +1,8 @@
+import 'dart:io' show Platform;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:alarm/alarm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
@@ -15,9 +20,31 @@ class AlarmService {
   AlarmService(this._storage);
 
   Future<void> init() async {
-    // alarm paketini iOS ve Android için hazırla
-    // Paketin bu sürümü izinleri Alarm.set sırasında veya init içinde halleder
+    // alarm paketini başlat
     await Alarm.init();
+
+    // Timezone ve Yedek Bildirim başlatılması (iOS için Hayati Hile)
+    tz.initializeTimeZones();
+    if (Platform.isIOS || Platform.isAndroid) {
+      try {
+        final timeZoneName = await FlutterTimezone.getLocalTimezone();
+        tz.setLocalLocation(tz.getLocation(timeZoneName));
+      } catch (e) {
+        debugPrint("Timezone ayarlanamadı: $e");
+      }
+    }
+
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const initializationSettingsIOS = DarwinInitializationSettings(
+      requestAlertPermission: false, 
+      requestBadgePermission: false, 
+      requestSoundPermission: false,
+    );
+    const initializationSettings = InitializationSettings(
+      iOS: initializationSettingsIOS,
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    );
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   Future<void> scheduleAlarm(AlarmModel alarm) async {
@@ -64,6 +91,43 @@ class AlarmService {
 
     try {
       await Alarm.set(alarmSettings: alarmSettings);
+
+      // ==========================================
+      // YEDEK BİLDİRİM HİLESİ (SADECE iOS İÇİN)
+      // ==========================================
+      if (Platform.isIOS) {
+        final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+        final baseId = (alarm.id % 100000) * 10;
+        
+        // Öncekileri temizle
+        for (int i = 0; i < 5; i++) {
+          await flutterLocalNotificationsPlugin.cancel(baseId + i);
+        }
+
+        const platformChannelSpecifics = NotificationDetails(
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+            interruptionLevel: InterruptionLevel.timeSensitive,
+          ),
+        );
+
+        // Tam alarm anından başlayarak her 30 saniyede bir bildirim (Toplam 5 kez)
+        for (int i = 0; i < 5; i++) {
+          final scheduledDate = tz.TZDateTime.from(alarmTime, tz.local).add(Duration(seconds: 30 * i));
+          
+          await flutterLocalNotificationsPlugin.zonedSchedule(
+            baseId + i,
+            alarmSettings.notificationSettings.title,
+            alarmSettings.notificationSettings.body,
+            scheduledDate,
+            platformChannelSpecifics,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          );
+        }
+      }
     } catch (e) {
       debugPrint("Alarm kurulamadı: $e");
     }
@@ -71,9 +135,21 @@ class AlarmService {
 
   Future<void> stopAlarm(int id) async {
     await Alarm.stop(id);
+    _cancelFallbackNotifications(id);
   }
 
   Future<void> cancelAlarm(int id) async {
     await Alarm.stop(id);
+    _cancelFallbackNotifications(id);
+  }
+
+  Future<void> _cancelFallbackNotifications(int id) async {
+    if (Platform.isIOS) {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      final baseId = (id % 100000) * 10;
+      for (int i = 0; i < 5; i++) {
+        await flutterLocalNotificationsPlugin.cancel(baseId + i);
+      }
+    }
   }
 }
