@@ -71,7 +71,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   DropdownButton<String>(
                     value: selectedOperator,
                     dropdownColor: AppTheme.cardColor,
-                    items: ['+', '-'].map((String val) {
+                    items: ['+', '-', '*', '/'].map((String val) {
                       return DropdownMenuItem<String>(
                         value: val,
                         child: Text(val, style: const TextStyle(color: Colors.white)),
@@ -107,7 +107,25 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     final n2 = int.tryParse(num2Controller.text.trim());
                     if (n1 == null || n2 == null) return;
 
-                    int answer = selectedOperator == '+' ? n1 + n2 : n1 - n2;
+                    if (selectedOperator == '/') {
+                      if (n2 == 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sıfıra bölünemez! / Cannot divide by zero'), backgroundColor: Colors.red));
+                        return;
+                      }
+                      if (n1 % n2 != 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Tam bölünmüyor! Lütfen kalansız bölünecek sayılar girin. (Örn: 10 / 2)'), backgroundColor: Colors.red));
+                        return;
+                      }
+                    }
+
+                    int answer;
+                    switch (selectedOperator) {
+                      case '+': answer = n1 + n2; break;
+                      case '-': answer = n1 - n2; break;
+                      case '*': answer = n1 * n2; break;
+                      case '/': answer = n1 ~/ n2; break;
+                      default: answer = n1 + n2;
+                    }
                     String question = "$n1 $selectedOperator $n2";
 
                     await ref.read(localStorageServiceProvider).addCustomQuestion(question, answer);
@@ -186,7 +204,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         await ref.read(localStorageServiceProvider).setPuzzleQuestionCount(newValue);
                       }
                     },
-                    items: [1, 2, 3, 4, 5].map<DropdownMenuItem<int>>((int value) {
+                    items: List.generate(10, (index) => index + 1).map<DropdownMenuItem<int>>((int value) {
                       return DropdownMenuItem<int>(
                         value: value,
                         child: Text(value.toString()),

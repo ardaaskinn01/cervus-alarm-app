@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io' show Platform;
 import 'models/alarm_model.dart';
 import 'views/home/home_view.dart';
 import 'views/ringing/ringing_view.dart';
@@ -126,6 +128,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       // 3. ADMOB BAŞLATMA
       await MobileAds.instance.initialize();
+
+      // 4. BİLDİRİM İZİNLERİNİ İSTE (iOS arka plan alarmları için hayati)
+      if (Platform.isIOS) {
+        final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+      }
 
       // NOT: Alarm.init() artık main() içinde çağrılıyor, burada tekrar çağırmaya gerek yok.
 
