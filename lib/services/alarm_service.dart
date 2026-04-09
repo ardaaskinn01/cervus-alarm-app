@@ -27,8 +27,8 @@ class AlarmService {
     tz.initializeTimeZones();
     if (Platform.isIOS || Platform.isAndroid) {
       try {
-        final timeZoneName = await FlutterTimezone.getLocalTimezone();
-        tz.setLocalLocation(tz.getLocation(timeZoneName));
+        final timeZoneInfo = await FlutterTimezone.getLocalTimezone();
+        tz.setLocalLocation(tz.getLocation(timeZoneInfo.identifier));
       } catch (e) {
         debugPrint("Timezone ayarlanamadı: $e");
       }
@@ -124,7 +124,6 @@ class AlarmService {
             scheduledDate,
             platformChannelSpecifics,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           );
         }
       }
