@@ -83,7 +83,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.get('alarm_saved_warning', locale) ?? 'Alarm kuruldu! Çalabilmesi için uygulamayı TAMAMEN KAPATMAYIN, arka planda (ana ekranda) bırakın.',
+            AppLocalizations.get('alarm_saved_warning', locale),
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           backgroundColor: Colors.orange.shade800,

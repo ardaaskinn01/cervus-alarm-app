@@ -24,7 +24,7 @@ class LocaleNotifier extends StateNotifier<String> {
 class AppLocalizations {
   static const Map<String, Map<String, String>> _localizedValues = {
     'tr': {
-      'app_title': 'Zorlu Alarm',
+      'app_title': 'Alarmly - Zorla Uyandıran Alarm',
       'home_title': 'Alarm',
       'home_empty_title': 'Sakin Bir Gün...',
       'home_empty_subtitle': 'Şu an için hiç alarmın yok.\nDinlenmene bak veya yeni bir alarm kur.',
@@ -86,9 +86,10 @@ class AppLocalizations {
       'success_morning': 'GÜNAYDIN!',
       'success_task_title': 'BUGÜNKÜ GÖREVİN',
       'success_start': 'GÜNE BAŞLA',
+      'alarm_saved_warning': 'Alarm kuruldu! Çalabilmesi için uygulamayı TAMAMEN KAPATMAYIN, arka planda (ana ekranda) bırakın.',
     },
     'en': {
-      'app_title': 'Hard Alarm',
+      'app_title': 'Alarmly - Wake Force Alarm',
       'home_title': 'Alarm',
       'home_empty_title': 'A Quiet Day...',
       'home_empty_subtitle': 'You have no alarms right now.\nTake a rest or set a new one.',
@@ -150,6 +151,7 @@ class AppLocalizations {
       'success_morning': 'GOOD MORNING!',
       'success_task_title': 'TODAY\'S TASK',
       'success_start': 'START THE DAY',
+      'alarm_saved_warning': 'Alarm saved! To ensure it rings, DO NOT FULLY KILL the app; leave it in the background.',
     },
   };
 

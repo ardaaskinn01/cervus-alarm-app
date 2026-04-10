@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:math_expressions/math_expressions.dart';
+import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
 import '../../services/local_storage_service.dart';
-import '../../core/app_localizations.dart';
+import 'privacy_policy_view.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
@@ -164,12 +164,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF09090E),
-              Color(0xFF160E30),
-              Color(0xFF2D1146),
-              Color(0xFF09090E),
+              AppTheme.backgroundColor,
+              AppTheme.gradientEndColor,
+              AppTheme.backgroundColor,
             ],
-            stops: [0.0, 0.4, 0.8, 1.0],
+            stops: const [0.0, 0.7, 1.0],
           ),
         ),
         child: SafeArea(
@@ -191,7 +190,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 icon: Icons.calculate_outlined,
                 title: AppLocalizations.get('settings_puzzle_count_title', locale),
                 subtitle: AppLocalizations.get('settings_puzzle_count_subtitle', locale),
-                iconColor: Colors.pinkAccent,
+                iconColor: AppTheme.secondaryColor,
                 trailing: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: _puzzleCount,
@@ -217,7 +216,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 icon: Icons.edit_note_rounded,
                 title: AppLocalizations.get('settings_custom_q_title', locale),
                 subtitle: AppLocalizations.get('settings_custom_q_subtitle', locale) + " (${_customQuestions.length})",
-                iconColor: Colors.deepOrangeAccent,
+                iconColor: AppTheme.primaryColor,
                 onTap: () {
                   // Show bottom sheet to manage existing Custom Questions + Add button
                   showModalBottomSheet(
@@ -293,22 +292,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: AppLocalizations.get('settings_privacy_title', locale),
                 subtitle: AppLocalizations.get('settings_privacy_subtitle', locale),
                 iconColor: Colors.greenAccent,
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PrivacyPolicyView()),
+                  );
+                },
               ),
               const SizedBox(height: 60),
-              
-              const Center(
-                child: Text(
-                  'Created by Cervus Team',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white24,
-                    fontSize: 12,
-                    letterSpacing: 1.2,
-                    height: 1.5,
-                  ),
-                ),
-              ),
             ],
           ),
         ),

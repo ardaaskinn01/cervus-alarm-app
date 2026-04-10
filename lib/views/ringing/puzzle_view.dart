@@ -173,12 +173,11 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF09090E),
-              Color(0xFF160E30),
-              Color(0xFF2D1146),
-              Color(0xFF09090E),
+              AppTheme.backgroundColor,
+              AppTheme.gradientEndColor,
+              AppTheme.backgroundColor,
             ],
-            stops: [0.0, 0.4, 0.8, 1.0],
+            stops: const [0.0, 0.7, 1.0],
           ),
         ),
         child: SafeArea(

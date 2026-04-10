@@ -93,7 +93,7 @@ class _AlarmAppState extends ConsumerState<AlarmApp> {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Zorlu Alarm',
+      title: 'Alarmly - Zorla Uyandıran Alarm',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),
@@ -119,8 +119,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    // İlk karenin çizilmesi için native motora zaman tanı
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Splash screen'in en az 2 saniye görünmesi için başlangıç zamanını tut
+    final startTime = DateTime.now();
+
+    // Native motora başlangıç zamanı tanı
+    await Future.delayed(const Duration(milliseconds: 500));
 
     try {
       // 2. FIREBASE BAŞLATMA
@@ -153,6 +156,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final savedLanguage = storageService.getLanguage();
       ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
 
+      // Minimum 2 saniye dolmadıysa bekle
+      final elapsedTime = DateTime.now().difference(startTime);
+      if (elapsedTime.inMilliseconds < 2500) {
+        await Future.delayed(Duration(milliseconds: 2500 - elapsedTime.inMilliseconds));
+      }
+
       // Her şey yüklendi, ana ekrana geç.
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -173,11 +182,45 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.primaryColor,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Hero(
+              tag: 'app_logo',
+              child: Image.asset(
+                'assets/images/Alarmly.PNG',
+                width: 140,
+                height: 140,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Alarmly - Zorla Uyandıran Alarm',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Developed by Cervus Team',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 14,
+                letterSpacing: 2.0,
+              ),
+            ),
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(
+              color: AppTheme.primaryColor,
+              strokeWidth: 3,
+            ),
+          ],
         ),
       ),
     );

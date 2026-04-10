@@ -49,11 +49,11 @@ class HomeView extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF09090E),
-              Color(0xFF160E30),
-              Color(0xFF09090E),
+              AppTheme.backgroundColor,
+              AppTheme.gradientEndColor,
+              AppTheme.backgroundColor,
             ],
-            stops: [0.0, 0.5, 1.0],
+            stops: const [0.0, 0.7, 1.0],
           ),
         ),
         child: SafeArea(

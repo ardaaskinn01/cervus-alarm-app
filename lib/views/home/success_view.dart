@@ -100,8 +100,8 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1CB5E0),
-              Color(0xFF000851),
+              AppTheme.backgroundColor,
+              AppTheme.gradientEndColor,
             ],
           ),
         ),
@@ -115,11 +115,11 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
                 child: Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: Colors.greenAccent.withOpacity(0.1),
+                    color: AppTheme.primaryColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.greenAccent.withOpacity(0.2),
+                        color: AppTheme.primaryColor.withOpacity(0.2),
                         blurRadius: 40,
                         spreadRadius: 20,
                       )
@@ -128,7 +128,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
                   child: const Icon(
                     Icons.wb_sunny_rounded,
                     size: 120,
-                    color: Colors.yellowAccent,
+                    color: AppTheme.secondaryColor,
                   ),
                 ),
               ),
@@ -176,12 +176,12 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.task_alt_rounded, color: Colors.greenAccent, size: 16),
+                              const Icon(Icons.task_alt_rounded, color: AppTheme.secondaryColor, size: 16),
                               const SizedBox(width: 8),
                               Text(
                                 AppLocalizations.get('success_task_title', locale),
                                 style: TextStyle(
-                                  color: Colors.greenAccent.withOpacity(0.8),
+                                  color: AppTheme.secondaryColor.withOpacity(0.8),
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 2.0,

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Derin kozmik renkler
-  static const Color primaryColor = Color(0xFF673AB7); // Deep Purple
-  static const Color secondaryColor = Color(0xFFE040FB); // Neon Pink/Purple
-  static const Color backgroundColor = Color(0xFF09090E); // Very dark navy/black
-  static const Color cardColor = Color(0xFF171721); // Dark cosmic blue
+  // Müşterinin yeni paleti (Modern Deep Blue & Amber)
+  static const Color primaryColor = Color(0xFFF59E0B); // Amber Accent
+  static const Color secondaryColor = Color(0xFFFBBF24); // Gold Highlight
+  static const Color backgroundColor = Color(0xFF0F172A); // Deep Navy Primary
+  static const Color gradientEndColor = Color(0xFF1E3A8A); // Blue Gradient
+  static const Color cardColor = Color(0xFF1E293B); // Slate/Navy blend for cards
 
   static ThemeData get darkTheme {
     return ThemeData(

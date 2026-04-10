@@ -56,6 +56,13 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: 2.4.13
   hive_generator: 2.0.1
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/Alarmly.PNG"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -71,7 +78,7 @@ flutter:
     - assets/audio/soft_alarm.mp3
     - assets/audio/hard_alarm.mp3
     - assets/audio/modern_alarm.mp3
-    - assets/audio/modern_alarm.mp3
+    - assets/images/Alarmly.PNG
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
