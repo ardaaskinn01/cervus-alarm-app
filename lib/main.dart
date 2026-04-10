@@ -119,50 +119,99 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    // Splash screen'in en az 2 saniye görünmesi için başlangıç zamanını tut
     final startTime = DateTime.now();
-
-    // Native motora başlangıç zamanı tanı
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
 
     try {
-      // 2. FIREBASE BAŞLATMA
-      await Firebase.initializeApp();
-
-      // 3. ADMOB BAŞLATMA
-      await MobileAds.instance.initialize();
-
-      // 4. BİLDİRİM VE TİMEZONE BAŞLATMA (Çok kritik, aksi halde izinler ve yedek bildirimler çalışmaz)
+      // 1. ALARM + BİLDİRİM + TIMEZONE (Hepsini EN ÖNCE başlat — izin sorulmadan firebase beklememeli)
       await ref.read(alarmServiceProvider).init();
 
-      // 2. BİLDİRİM İZİNLERİNİ İSTE (Android 13+ ve iOS için güvence)
-      final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      // 2. BİLDİRİM İZNİNİ EKRANA GETİR
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      bool? permissionGranted;
+
       if (Platform.isIOS) {
-        await flutterLocalNotificationsPlugin
+        permissionGranted = await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-            ?.requestPermissions(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
+            ?.requestPermissions(alert: true, badge: true, sound: true);
       } else if (Platform.isAndroid) {
-        await flutterLocalNotificationsPlugin
+        permissionGranted = await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
             ?.requestNotificationsPermission();
       }
 
-      // Dil senkronizasyonu
+      // 3. İZİN VERİLMEDİYSE AYARLAR'A YÖNLENDİR
+      if (permissionGranted == false && mounted) {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF1E293B),
+            title: const Row(
+              children: [
+                Icon(Icons.notifications_off_rounded, color: Color(0xFFF59E0B)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Bildirim İzni Gerekli',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Alarmların çalabilmesi için bildirim iznine ihtiyaç var.\n\nLütfen Ayarlar\'dan bildirimlere izin verin.',
+              style: TextStyle(color: Colors.white70, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Şimdi Değil', style: TextStyle(color: Colors.white38)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF59E0B),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  // Kullanıcıya ayarlara nasıl gideceğini göster
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Ayarlar > Bildirimler > Alarmly yolunu izleyin ve bildirimleri açın.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        backgroundColor: Color(0xFF1E3A8A),
+                        duration: Duration(seconds: 6),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Ayarları Aç', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // 4. FIREBASE VE ADMOB (Arka planda, bloklamadan)
+      Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
+      MobileAds.instance.initialize().catchError((e) => debugPrint("AdMob: $e"));
+
+      // 5. DİL SENKRONIZASYONU
       final storageService = ref.read(localStorageServiceProvider);
       final savedLanguage = storageService.getLanguage();
       ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
 
-      // Minimum 2 saniye dolmadıysa bekle
+      // 6. MİNİMUM SPLASH SÜRESİNİ TAMAMLA
       final elapsedTime = DateTime.now().difference(startTime);
       if (elapsedTime.inMilliseconds < 2500) {
         await Future.delayed(Duration(milliseconds: 2500 - elapsedTime.inMilliseconds));
       }
 
-      // Her şey yüklendi, ana ekrana geç.
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
@@ -170,7 +219,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         isAppReady.value = true;
       }
     } catch (e) {
-      debugPrint("Başlatma sırasında hata: $e");
+      debugPrint("Başlatma hatası: $e");
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
@@ -179,6 +228,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
