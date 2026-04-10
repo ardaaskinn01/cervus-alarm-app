@@ -24,7 +24,7 @@ class LocaleNotifier extends StateNotifier<String> {
 class AppLocalizations {
   static const Map<String, Map<String, String>> _localizedValues = {
     'tr': {
-      'app_title': 'Alarmly - Zorla Uyandıran Alarm',
+      'app_title': 'Alarmly - Uyandıran Alarm',
       'home_title': 'Alarm',
       'home_empty_title': 'Sakin Bir Gün...',
       'home_empty_subtitle': 'Şu an için hiç alarmın yok.\nDinlenmene bak veya yeni bir alarm kur.',

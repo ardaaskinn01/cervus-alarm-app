@@ -93,7 +93,7 @@ class _AlarmAppState extends ConsumerState<AlarmApp> {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Alarmly - Zorla Uyandıran Alarm',
+      title: 'Alarmly - Uyandıran Alarm',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),
@@ -198,7 +198,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Alarmly - Zorla Uyandıran Alarm',
+              'Alarmly - Uyandıran Alarm',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 22,
