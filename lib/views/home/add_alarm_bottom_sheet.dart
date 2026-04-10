@@ -56,6 +56,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   }
 
   Future<void> saveAlarm() async {
+    final locale = ref.read(localeProvider);
     if (widget.existingAlarm != null) {
       final updatedAlarm = widget.existingAlarm!.copyWith(
         hour: selectedTime.hour,
@@ -79,6 +80,16 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       await ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
     if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.get('alarm_saved_warning', locale) ?? 'Alarm kuruldu! Çalabilmesi için uygulamayı TAMAMEN KAPATMAYIN, arka planda (ana ekranda) bırakın.',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.orange.shade800,
+          duration: const Duration(seconds: 4),
+        ),
+      );
       Navigator.pop(context);
     }
   }

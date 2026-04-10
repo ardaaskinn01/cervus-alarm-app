@@ -90,6 +90,11 @@ class AlarmService {
     );
 
     try {
+      // iOS'ta kullanıcı uygulamayı yukarı kaydırıp ÖLDÜRÜRSE (swipe kill) çıkacak Türkçe uyarıyı ayarlıyoruz
+      await Alarm.setWarningNotificationOnKill(
+        '⚠️ DİKKAT: Alarmınız Çalmayabilir!',
+        'Uygulamayı tamamen kapattınız! Apple arka planda 30 saniyeden uzun müzik çalınmasını engeller. Lütfen tam kapalıyken 5 kısa bildirim sesiyle idare edin ya da uygulamayı ana ekrana dönerek açık bırakın.',
+      );
       await Alarm.set(alarmSettings: alarmSettings);
 
       // ==========================================

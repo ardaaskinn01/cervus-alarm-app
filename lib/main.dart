@@ -123,7 +123,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
 
     try {
-      // 1. ÖNCE BİLDİRİM VE TİMEZONE BAŞLATMA (Çok kritik, hata fırlatabilecek servislerden önce çalışmalı)
+      // 2. FIREBASE BAŞLATMA
+      await Firebase.initializeApp();
+
+      // 3. ADMOB BAŞLATMA
+      await MobileAds.instance.initialize();
+
+      // 4. BİLDİRİM VE TİMEZONE BAŞLATMA (Çok kritik, aksi halde izinler ve yedek bildirimler çalışmaz)
       await ref.read(alarmServiceProvider).init();
 
       // 2. BİLDİRİM İZİNLERİNİ İSTE (Android 13+ ve iOS için güvence)
@@ -141,12 +147,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
             ?.requestNotificationsPermission();
       }
-
-      // 3. FIREBASE BAŞLATMA
-      await Firebase.initializeApp();
-
-      // 4. ADMOB BAŞLATMA (Eğer Info.plist'te AppID eksikse burada hata fırlatabilir!)
-      await MobileAds.instance.initialize();
 
       // Dil senkronizasyonu
       final storageService = ref.read(localStorageServiceProvider);
