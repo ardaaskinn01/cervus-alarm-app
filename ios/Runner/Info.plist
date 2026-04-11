@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.0</string>
+	<string>2.0.1</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>40</string>
+	<string>41</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -65,7 +65,5 @@
 	</dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-2073707860224174~7263494101</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Size daha ilgi çekici reklamlar sunabilmek için bu izne ihtiyacımız var.</string>
 </dict>
 </plist>
