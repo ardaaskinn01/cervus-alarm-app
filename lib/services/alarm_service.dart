@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
 import 'package:flutter/foundation.dart';
 import 'local_storage_service.dart';
+import '../core/app_localizations.dart';
 
 final alarmServiceProvider = Provider<AlarmService>((ref) {
   final storage = ref.read(localStorageServiceProvider);
@@ -47,7 +48,7 @@ class AlarmService {
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
-  Future<void> scheduleAlarm(AlarmModel alarm) async {
+  Future<void> scheduleAlarm(AlarmModel alarm, String locale) async {
     // Mevcut zamana göre bir sonraki alarm anını hesapla
     DateTime now = DateTime.now();
     DateTime alarmTime = DateTime(
@@ -81,19 +82,19 @@ class AlarmService {
       ),
       vibrate: _storage.getGlobalVibrate(),
       warningNotificationOnKill: true,
-      notificationSettings: const NotificationSettings(
-        title: "Zorlu Alarm - Uyanma Vakti!",
-        body: "Günün başlıyor, hadi ayılma vakti!",
+      notificationSettings: NotificationSettings(
+        title: AppLocalizations.get('ringing_notification_title', locale),
+        body: AppLocalizations.get('ringing_notification_body', locale),
         stopButton: null,
         icon: null,
       ),
     );
 
     try {
-      // iOS'ta kullanıcı uygulamayı yukarı kaydırıp ÖLDÜRÜRSE (swipe kill) çıkacak Türkçe uyarıyı ayarlıyoruz
+      // iOS'ta kullanıcı uygulamayı yukarı kaydırıp ÖLDÜRÜRSE (swipe kill) çıkacak uyarıyı dile göre ayarlıyoruz
       await Alarm.setWarningNotificationOnKill(
-        '⚠️ DİKKAT: Alarmınız Çalmayabilir!',
-        'Uygulamayı tamamen kapattınız! Apple arka plan alarmlarının çalınmasını engeller. Lütfen uygulamayı ana ekrana dönerek açık bırakın.',
+        AppLocalizations.get('kill_warning_title', locale),
+        AppLocalizations.get('kill_warning_body', locale),
       );
       await Alarm.set(alarmSettings: alarmSettings);
 
@@ -115,6 +116,7 @@ class AlarmService {
             presentSound: true,
             presentBadge: true,
             interruptionLevel: InterruptionLevel.timeSensitive,
+            sound: 'hard_alarm.mp3', // Play custom sound from assets if available!
           ),
         );
 
@@ -129,6 +131,7 @@ class AlarmService {
             scheduledDate,
             platformChannelSpecifics,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            payload: alarm.id.toString(),
           );
         }
       }

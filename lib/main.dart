@@ -126,8 +126,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // 1. ALARM + BİLDİRİM + TIMEZONE (Hepsini EN ÖNCE başlat — izin sorulmadan firebase beklememeli)
       await ref.read(alarmServiceProvider).init();
 
-      // 2. BİLDİRİM İZNİNİ EKRANA GETİR
-      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      // 2. BİLDİRİM İZNİNİ EKRANA GETİR VE TIKLANMA OLAYLARINI DİNLE
+      final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      
+      // Bildirime tıklandığında (uygulama arka planda açıksa)
+      void onNotificationTap(NotificationResponse response) {
+        if (response.payload != null) {
+          final int? alarmId = int.tryParse(response.payload!);
+          if (alarmId != null) {
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(builder: (context) => RingingView(alarmId: alarmId)),
+            );
+          }
+        }
+      }
+
+      await flutterLocalNotificationsPlugin.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/launcher_icon'),
+          iOS: DarwinInitializationSettings(),
+        ),
+        onDidReceiveNotificationResponse: onNotificationTap,
+      );
+
       bool? permissionGranted;
 
       if (Platform.isIOS) {
@@ -206,15 +227,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       final savedLanguage = storageService.getLanguage();
       ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
 
-      // 6. MİNİMUM SPLASH SÜRESİNİ TAMAMLA
+      // 6. MİNİMUM SPLASH SÜRESİNİ TAMAMLA VE ANA EKRANA YÖNLENDİR
       final elapsedTime = DateTime.now().difference(startTime);
       if (elapsedTime.inMilliseconds < 2500) {
         await Future.delayed(Duration(milliseconds: 2500 - elapsedTime.inMilliseconds));
       }
 
+      // Bildirimden mi uygulamayı açıyor kontrol et (uygulama tam kapalıysa)
+      Widget nextView = const HomeView();
+      final NotificationAppLaunchDetails? launchDetails = await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        final payload = launchDetails?.notificationResponse?.payload;
+        if (payload != null) {
+          final int? alarmId = int.tryParse(payload);
+          if (alarmId != null) {
+            nextView = RingingView(alarmId: alarmId);
+          }
+        }
+      }
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeView()),
+          MaterialPageRoute(builder: (context) => nextView),
         );
         isAppReady.value = true;
       }
@@ -258,7 +292,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Developed by Cervus Team',
+              'Developed by Cervus Digital',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.5),
                 fontSize: 14,

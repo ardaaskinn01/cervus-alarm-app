@@ -41,6 +41,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
 
   @override
   void dispose() {
+    FlutterRingtonePlayer().stop(); // Önizlemeyi durdur
     labelController.dispose();
     super.dispose();
   }
@@ -79,6 +80,10 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       );
       await ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
+    
+    // 🎵 Kaydettikten sonra çalan önizlemeyi hemen durdur
+    FlutterRingtonePlayer().stop();
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -261,14 +266,14 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   Widget _melodyChip(String label, String path) {
     final bool isSelected = selectedSound == path;
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() {
           selectedSound = path;
         });
         // 🎵 Ses Önizleme (Preview)
         try {
-          FlutterRingtonePlayer().stop(); // Varsa çalan sesi durdur
-          FlutterRingtonePlayer().play(
+          await FlutterRingtonePlayer().stop(); // Varsa çalan sesi tamamen durdurana kadar bekle
+          await FlutterRingtonePlayer().play(
             fromAsset: path, // Seçilen sesi çal
             looping: false,
             volume: 0.8,

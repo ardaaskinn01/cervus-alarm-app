@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_model.dart';
 import '../services/local_storage_service.dart';
 import '../services/alarm_service.dart';
+import '../core/app_localizations.dart';
 
 class HomeViewModel extends Notifier<List<AlarmModel>> {
   @override
@@ -23,7 +24,8 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     // 3. Alarm servisini ayrı try-catch'te çalıştır
     if (newAlarm.isActive) {
       try {
-        await alarmService.scheduleAlarm(newAlarm);
+        final locale = ref.read(localeProvider);
+        await alarmService.scheduleAlarm(newAlarm, locale);
       } catch (e) {
         debugPrint('Alarm zamanlama hatası: $e');
       }
@@ -44,7 +46,8 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     try {
       await alarmService.cancelAlarm(updatedAlarm.id);
       if (updatedAlarm.isActive) {
-        await alarmService.scheduleAlarm(updatedAlarm);
+        final locale = ref.read(localeProvider);
+        await alarmService.scheduleAlarm(updatedAlarm, locale);
       }
     } catch (e) {
       debugPrint('Alarm güncelleme hatası: $e');
@@ -66,7 +69,8 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     // 3. Alarm servisini ayrı try-catch'te çalıştır
     try {
       if (isActive) {
-        await alarmService.scheduleAlarm(updatedAlarm);
+        final locale = ref.read(localeProvider);
+        await alarmService.scheduleAlarm(updatedAlarm, locale);
       } else {
         await alarmService.cancelAlarm(updatedAlarm.id);
       }
@@ -93,8 +97,9 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       state = List.from(storage.getAlarms());
 
       try {
+        final locale = ref.read(localeProvider);
         await alarmService.cancelAlarm(id);
-        await alarmService.scheduleAlarm(snoozedAlarm);
+        await alarmService.scheduleAlarm(snoozedAlarm, locale);
       } catch (e) {
         debugPrint('Snooze alarm hatası: $e');
       }

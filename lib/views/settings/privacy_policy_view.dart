@@ -72,7 +72,7 @@ class PrivacyPolicyView extends ConsumerWidget {
                     style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
                   ),
                   const Text(
-                    "support@cervusdigital.com",
+                    "alarmly@cervusdigital.com",
                     style: TextStyle(color: Colors.white70),
                   ),
                 ],
@@ -95,7 +95,7 @@ We do not sell, rent, or share your personal information with third parties.
   """;
 
   static const String _policyTr = """
-Zorla Uyandıran Alarm (Alarmly) gizliliğinize saygı duyar.
+Alarmly gizliliğinize saygı duyar.
 
 Açık izniniz olmadan hiçbir kişisel veriniz toplanmaz, saklanmaz veya paylaşılmaz.
 Uygulama, yalnızca temel işlevlerini yerine getirmek için bazı cihaz özelliklerine (bildirimler, alarmlar vb.) erişim isteyebilir.

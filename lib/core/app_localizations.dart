@@ -86,7 +86,11 @@ class AppLocalizations {
       'success_morning': 'GÜNAYDIN!',
       'success_task_title': 'BUGÜNKÜ GÖREVİN',
       'success_start': 'GÜNE BAŞLA',
-      'alarm_saved_warning': 'Alarm kuruldu! Çalabilmesi için uygulamayı TAMAMEN KAPATMAYIN, arka planda (ana ekranda) bırakın.',
+      'alarm_saved_warning': 'Alarm kuruldu! Lütfen uygulamayı arka planda açık bırakın. Alarmly pil ömrüne dosttur, şarj tüketmez.',
+      'kill_warning_title': '⚠️ DİKKAT: Alarmınız Çalmayabilir!',
+      'kill_warning_body': 'Uygulamayı tamamen kapattınız! Apple arka plan alarmlarının çalınmasını engeller. Lütfen uygulamayı ana ekrana dönerek açık bırakın.',
+      'ringing_notification_title': 'Zorlu Alarm - Uyanma Vakti!',
+      'ringing_notification_body': 'Günün başlıyor, hadi ayılma vakti!',
     },
     'en': {
       'app_title': 'Alarmly - Wake Force Alarm',
@@ -151,7 +155,11 @@ class AppLocalizations {
       'success_morning': 'GOOD MORNING!',
       'success_task_title': 'TODAY\'S TASK',
       'success_start': 'START THE DAY',
-      'alarm_saved_warning': 'Alarm saved! To ensure it rings, DO NOT FULLY KILL the app; leave it in the background.',
+      'alarm_saved_warning': 'Alarm saved! Please keep the app in the background. Alarmly is battery-friendly and consumes no power.',
+      'kill_warning_title': '⚠️ WARNING: Alarm May Not Ring!',
+      'kill_warning_body': 'You have fully closed the app! Apple prevents background alarms from ringing if the app is killed. Please leave it in the background.',
+      'ringing_notification_title': 'Hard Alarm - Wake Up!',
+      'ringing_notification_body': 'Your day is starting, time to wake up!',
     },
   };
 
