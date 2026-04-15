@@ -301,6 +301,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 },
               ),
               const SizedBox(height: 60),
+          ],
           ),
         ),
       ),
