@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -279,7 +280,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: AppLocalizations.get('settings_rate_title', locale),
                 subtitle: AppLocalizations.get('settings_rate_subtitle', locale),
                 iconColor: Colors.amber,
-                onTap: () {},
+                onTap: () async {
+                  final url = Uri.parse(
+                    Platform.isAndroid
+                        ? "https://play.google.com/store/apps/details?id=com.cervus.alarmly"
+                        : "https://apps.apple.com/tr/app/alarmly-wake-force-alarm/id6761625063",
+                  );
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
               _buildSettingTile(
                 icon: Icons.language_outlined,

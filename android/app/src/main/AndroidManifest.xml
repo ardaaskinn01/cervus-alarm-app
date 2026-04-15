@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
@@ -58,7 +59,7 @@
              ancak bu durumda alarm çaldığında uygulama çökebilir veya ses arka planda durabilir. -->
         <service
             android:name="com.gdelataillade.alarm.services.AlarmService"
-            android:foregroundServiceType="specialUse"
+            android:foregroundServiceType="mediaPlayback|specialUse"
             tools:node="replace">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
