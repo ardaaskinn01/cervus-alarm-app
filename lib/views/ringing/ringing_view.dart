@@ -121,23 +121,28 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
               const SizedBox(height: 60),
               Text(
                 AppLocalizations.get('ringing_title', locale),
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 42,
+                  fontSize: 36, // Slightly reduced from 42 to fit better
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 4.0,
+                  letterSpacing: 2.0, // Reduced from 4.0
                   shadows: [
                     Shadow(color: Colors.black45, offset: Offset(0, 4), blurRadius: 10),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
-                AppLocalizations.get('ringing_subtitle', locale),
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  AppLocalizations.get('ringing_subtitle', locale),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const Spacer(),
