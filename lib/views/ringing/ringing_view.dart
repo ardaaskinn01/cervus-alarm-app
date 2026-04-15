@@ -6,6 +6,7 @@ import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import 'puzzle_view.dart';
 import '../home/success_view.dart';
+import '../components/banner_ad_widget.dart';
 
 class RingingView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -64,6 +65,7 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
     final locale = ref.watch(localeProvider);
 
     return Scaffold(
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
       body: Container(
         width: double.infinity,
         height: double.infinity,

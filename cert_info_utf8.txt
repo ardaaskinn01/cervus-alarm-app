@@ -1,0 +1,26 @@
+﻿Alias name: upload
+Creation date: 11 Nis 2026
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=arda askin, OU=software, O=cervus, L=izmir, ST=aegean, C=tr
+Issuer: CN=arda askin, OU=software, O=cervus, L=izmir, ST=aegean, C=tr
+Serial number: d42dea0eb9ab60ea
+Valid from: Sat Apr 11 15:40:36 TRT 2026 until: Wed Aug 27 15:40:36 TRT 2053
+Certificate fingerprints:
+	 SHA1: 6F:F7:86:D5:A4:DC:4E:96:73:F9:B5:34:89:E8:97:56:92:13:41:2C
+	 SHA256: BF:43:3C:4C:00:6E:92:FF:64:5D:5B:85:0B:7C:AD:E1:E0:92:71:9F:B5:A6:3E:C2:50:63:47:49:10:C6:FD:C5
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 2048-bit RSA key
+Version: 3
+
+Extensions: 
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 8E 75 CC FC BB DA 33 43   E7 6B 69 F3 89 4D 1D 53  .u....3C.ki..M.S
+0010: 35 FD 58 18                                        5.X.
+]
+]
+

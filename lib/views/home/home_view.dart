@@ -7,6 +7,7 @@ import '../../viewmodels/home_viewmodel.dart';
 import 'add_alarm_bottom_sheet.dart';
 import '../settings/settings_view.dart';
 import '../../core/app_localizations.dart';
+import '../components/banner_ad_widget.dart';
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
@@ -156,12 +157,16 @@ class HomeView extends ConsumerWidget {
                 ),
         ),
       ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _showAddAlarmSheet(context),
-          backgroundColor: AppTheme.secondaryColor,
-          child: const Icon(Icons.add, size: 32, color: Colors.white),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 20.0),
+          child: FloatingActionButton(
+            onPressed: () => _showAddAlarmSheet(context),
+            backgroundColor: AppTheme.secondaryColor,
+            child: const Icon(Icons.add, size: 32, color: Colors.white),
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
       );
     }
   }

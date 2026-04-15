@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:math';
 import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
@@ -9,6 +8,7 @@ import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../../services/local_storage_service.dart';
 import '../home/success_view.dart';
+import '../components/banner_ad_widget.dart';
 
 class PuzzleView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -37,21 +37,13 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
   int correctAnswer = 0;
   String operatorText = '+';
 
-  BannerAd? _bannerAd;
-
-  // Test Banner ID
-  final String _adUnitId = 'ca-app-pub-3940256099942544/2934735716';
-
   @override
   void initState() {
     super.initState();
-    // riverpod ref.read() shouldn't be used directly like this outside build, but it's safe if provider doesn't change
     final storage = ref.read(localStorageServiceProvider);
     _targetQuestionCount = storage.getPuzzleQuestionCount();
     _customQuestions = storage.getCustomQuestions();
-
     _generatePuzzle();
-    _loadAds();
   }
 
   void _generatePuzzle() {
@@ -87,17 +79,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     setState(() {});
   }
 
-  void _loadAds() {
-    BannerAd(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
-      size: AdSize.banner,
-      listener: BannerAdListener(
-        onAdLoaded: (ad) => setState(() => _bannerAd = ad as BannerAd),
-        onAdFailedToLoad: (ad, err) => ad.dispose(),
-      ),
-    ).load();
-  }
+
 
   Future<void> _checkAnswer() async {
     final int? userAnswer = int.tryParse(_answerController.text.trim());
@@ -148,7 +130,6 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
   @override
   void dispose() {
     _answerController.dispose();
-    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -340,12 +321,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
                   ),
                 ),
               ),
-              if (_bannerAd != null)
-                SizedBox(
-                  width: _bannerAd!.size.width.toDouble(),
-                  height: _bannerAd!.size.height.toDouble(),
-                  child: AdWidget(ad: _bannerAd!),
-                ),
+              const SafeArea(child: BannerAdWidget()),
             ],
           ),
         ),

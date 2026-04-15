@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:782844791733:android:d3c190702557c8d8d627fc",
+        "mobilesdk_app_id": "1:782844791733:android:e17f2ef37c26a246d627fc",
         "android_client_info": {
-          "package_name": "com.cervus.alarm"
+          "package_name": "com.cervus.alarmly"
         }
       },
       "oauth_client": [],

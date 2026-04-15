@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
 import '../../services/local_storage_service.dart';
-import 'privacy_policy_view.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../components/banner_ad_widget.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
@@ -292,18 +293,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: AppLocalizations.get('settings_privacy_title', locale),
                 subtitle: AppLocalizations.get('settings_privacy_subtitle', locale),
                 iconColor: Colors.greenAccent,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PrivacyPolicyView()),
-                  );
+                onTap: () async {
+                  final url = Uri.parse("https://cervusdigital.com/alarmly/privacy-policy/");
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
                 },
               ),
               const SizedBox(height: 60),
-            ],
           ),
         ),
       ),
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
     );
   }
 

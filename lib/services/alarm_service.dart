@@ -43,7 +43,7 @@ class AlarmService {
     );
     const initializationSettings = InitializationSettings(
       iOS: initializationSettingsIOS,
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      android: AndroidInitializationSettings('@mipmap/launcher_icon'),
     );
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
@@ -99,41 +99,51 @@ class AlarmService {
       await Alarm.set(alarmSettings: alarmSettings);
 
       // ==========================================
-      // YEDEK BİLDİRİM HİLESİ (SADECE iOS İÇİN)
+      // YEDEK BİLDİRİM HİLESİ (iOS & Android)
       // ==========================================
-      if (Platform.isIOS) {
-        final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-        final baseId = (alarm.id % 100000) * 10;
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      final baseId = (alarm.id % 100000) * 10;
+      
+      // Öncekileri temizle
+      for (int i = 0; i < 5; i++) {
+        await flutterLocalNotificationsPlugin.cancel(baseId + i);
+      }
+
+      final platformChannelSpecifics = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'alarm_channel_id',
+          'Alarmlar',
+          channelDescription: 'Alarm vaktinde çalan yedek bildirimler',
+          importance: Importance.max,
+          priority: Priority.max,
+          fullScreenIntent: true, // Ekran kilitliyken tam ekran açılması için kritik!
+          audioAttributesUsage: AudioAttributesUsage.alarm,
+          sound: const RawResourceAndroidNotificationSound('hard_alarm'),
+          playSound: true,
+          enableVibration: true,
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+          sound: 'hard_alarm.mp3',
+        ),
+      );
+
+      // Tam alarm anından başlayarak her 30 saniyede bir bildirim (Toplam 5 kez)
+      for (int i = 0; i < 5; i++) {
+        final scheduledDate = tz.TZDateTime.from(alarmTime, tz.local).add(Duration(seconds: 30 * i));
         
-        // Öncekileri temizle
-        for (int i = 0; i < 5; i++) {
-          await flutterLocalNotificationsPlugin.cancel(baseId + i);
-        }
-
-        const platformChannelSpecifics = NotificationDetails(
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentSound: true,
-            presentBadge: true,
-            interruptionLevel: InterruptionLevel.timeSensitive,
-            sound: 'hard_alarm.mp3', // Play custom sound from assets if available!
-          ),
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          baseId + i,
+          alarmSettings.notificationSettings.title,
+          alarmSettings.notificationSettings.body,
+          scheduledDate,
+          platformChannelSpecifics,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload: alarm.id.toString(),
         );
-
-        // Tam alarm anından başlayarak her 30 saniyede bir bildirim (Toplam 5 kez)
-        for (int i = 0; i < 5; i++) {
-          final scheduledDate = tz.TZDateTime.from(alarmTime, tz.local).add(Duration(seconds: 30 * i));
-          
-          await flutterLocalNotificationsPlugin.zonedSchedule(
-            baseId + i,
-            alarmSettings.notificationSettings.title,
-            alarmSettings.notificationSettings.body,
-            scheduledDate,
-            platformChannelSpecifics,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-            payload: alarm.id.toString(),
-          );
-        }
       }
     } catch (e) {
       debugPrint("Alarm kurulamadı: $e");
@@ -151,12 +161,10 @@ class AlarmService {
   }
 
   Future<void> _cancelFallbackNotifications(int id) async {
-    if (Platform.isIOS) {
-      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      final baseId = (id % 100000) * 10;
-      for (int i = 0; i < 5; i++) {
-        await flutterLocalNotificationsPlugin.cancel(baseId + i);
-      }
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    final baseId = (id % 100000) * 10;
+    for (int i = 0; i < 5; i++) {
+      await flutterLocalNotificationsPlugin.cancel(baseId + i);
     }
   }
 }
