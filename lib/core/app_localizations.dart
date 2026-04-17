@@ -84,6 +84,9 @@ class AppLocalizations {
 
       // SuccessView
       'success_morning': 'GÜNAYDIN!',
+      'success_afternoon': 'TÜNAYDIN!',
+      'success_evening': 'İYİ AKŞAMLAR!',
+      'success_night': 'İYİ GECELER!',
       'success_task_title': 'BUGÜNKÜ GÖREVİN',
       'success_start': 'GÜNE BAŞLA',
       'alarm_saved_warning': 'Alarm kuruldu! Lütfen uygulamayı arka planda açık bırakın. Alarmly pil ömrüne dosttur, şarj tüketmez.',
@@ -153,6 +156,9 @@ class AppLocalizations {
 
       // SuccessView
       'success_morning': 'GOOD MORNING!',
+      'success_afternoon': 'GOOD AFTERNOON!',
+      'success_evening': 'GOOD EVENING!',
+      'success_night': 'GOOD NIGHT!',
       'success_task_title': 'TODAY\'S TASK',
       'success_start': 'START THE DAY',
       'alarm_saved_warning': 'Alarm saved! Please keep the app in the background. Alarmly is battery-friendly and consumes no power.',

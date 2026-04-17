@@ -6,6 +6,7 @@ import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
 import '../../services/local_storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:in_app_review/in_app_review.dart';
 import '../components/banner_ad_widget.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
@@ -281,13 +282,29 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 subtitle: AppLocalizations.get('settings_rate_subtitle', locale),
                 iconColor: Colors.amber,
                 onTap: () async {
-                  final url = Uri.parse(
-                    Platform.isAndroid
-                        ? "https://play.google.com/store/apps/details?id=com.cervus.alarmly"
-                        : "https://apps.apple.com/tr/app/alarmly-wake-force-alarm/id6761625063",
-                  );
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  final InAppReview inAppReview = InAppReview.instance;
+
+                  try {
+                    if (await inAppReview.isAvailable()) {
+                      // OS determines if the dialog should actually show up.
+                      // If the user has already reviewed or reached the limit, this does nothing silently.
+                      await inAppReview.requestReview();
+                    } else {
+                      // If the native dialog is strictly unavailable, open the store page directly.
+                      await inAppReview.openStoreListing(
+                        appStoreId: '6761625063', // Alarmly iOS ID
+                      );
+                    }
+                  } catch (e) {
+                    // Final fallback to URL launcher if anything goes wrong
+                    final url = Uri.parse(
+                      Platform.isAndroid
+                          ? "https://play.google.com/store/apps/details?id=com.cervus.alarmly"
+                          : "https://apps.apple.com/app/id6761625063",
+                    );
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
                   }
                 },
               ),

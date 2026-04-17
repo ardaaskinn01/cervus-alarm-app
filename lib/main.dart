@@ -219,9 +219,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         );
       }
 
-      // 4. FIREBASE VE ADMOB (Arka planda, bloklamadan)
+      // 4. FIREBASE VE ADMOB — AdMob'u await ile başlatıyoruz!
+      // BannerAdWidget, HomeView açılır açılmaz reklam yüklemeye çalışır.
+      // Eğer MobileAds henüz initialize olmamışsa, tüm reklam istekleri
+      // geçersiz sayılır ve onAdFailedToLoad tetiklenir. Bu yüzden AWAIT şart!
       Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
-      MobileAds.instance.initialize().catchError((e) => debugPrint("AdMob: $e"));
+      await MobileAds.instance.initialize();
 
       // 5. DİL SENKRONIZASYONU
       final storageService = ref.read(localStorageServiceProvider);

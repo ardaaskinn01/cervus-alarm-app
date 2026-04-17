@@ -4,6 +4,8 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../core/ad_helper.dart';
 
 class SuccessView extends ConsumerStatefulWidget {
   const SuccessView({super.key});
@@ -51,6 +53,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
 
   late String _todaysQuote;
   late String _todaysTask;
+  InterstitialAd? _interstitialAd;
 
   @override
   void initState() {
@@ -74,11 +77,54 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
     );
 
     _controller.forward();
+    _loadInterstitialAd();
+  }
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          debugPrint('InterstitialAd loaded.');
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('InterstitialAd failed to load: $error');
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAdAndReturn() {
+    if (_interstitialAd == null) {
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      return;
+    }
+
+    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+      onAdFailedToShowFullScreenContent: (ad, err) {
+        debugPrint('Ad failed to show: $err');
+        ad.dispose();
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+    );
+
+    _interstitialAd!.show();
+    _interstitialAd = null;
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _interstitialAd?.dispose();
     super.dispose();
   }
 
@@ -90,6 +136,19 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
     
     final currentQuote = locale == 'en' ? _quotesEn[quoteIdx] : _quotesTr[quoteIdx];
     final currentTask = locale == 'en' ? _tasksEn[taskIdx] : _tasksTr[taskIdx];
+
+    // Determine greeting based on current hour
+    final hour = DateTime.now().hour;
+    String greetingKey;
+    if (hour >= 6 && hour < 12) {
+      greetingKey = 'success_morning';
+    } else if (hour >= 12 && hour < 18) {
+      greetingKey = 'success_afternoon';
+    } else if (hour >= 18 && hour < 24) {
+      greetingKey = 'success_evening';
+    } else {
+      greetingKey = 'success_night';
+    }
 
     return Scaffold(
       body: Container(
@@ -138,7 +197,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
                 child: Column(
                   children: [
                     Text(
-                      AppLocalizations.get('success_morning', locale),
+                      AppLocalizations.get(greetingKey, locale),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 48,
@@ -227,9 +286,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      },
+                      onPressed: _showInterstitialAdAndReturn,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
