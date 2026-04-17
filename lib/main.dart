@@ -13,6 +13,7 @@ import 'services/local_storage_service.dart';
 import 'services/alarm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/app_localizations.dart';
+import 'views/onboarding/initial_setup_view.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -234,7 +235,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
 
       // Bildirimden mi uygulamayı açıyor kontrol et (uygulama tam kapalıysa)
-      Widget nextView = const HomeView();
+      bool isPrivacyAccepted = storageService.getPrivacyPolicyAccepted();
+      Widget nextView = isPrivacyAccepted ? const HomeView() : const InitialSetupView();
       final NotificationAppLaunchDetails? launchDetails = await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
       if (launchDetails?.didNotificationLaunchApp ?? false) {
         final payload = launchDetails?.notificationResponse?.payload;
@@ -255,8 +257,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } catch (e) {
       debugPrint("Başlatma hatası: $e");
       if (mounted) {
+        bool isPrivacyAccepted = ref.read(localStorageServiceProvider).getPrivacyPolicyAccepted();
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeView()),
+          MaterialPageRoute(builder: (context) => isPrivacyAccepted ? const HomeView() : const InitialSetupView()),
         );
         isAppReady.value = true;
       }

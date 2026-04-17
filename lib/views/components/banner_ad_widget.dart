@@ -27,13 +27,21 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           debugPrint('Ad loaded.');
-          setState(() {
-            _isLoaded = true;
-          });
+          if (mounted) {
+            setState(() {
+              _isLoaded = true;
+            });
+          }
         },
         onAdFailedToLoad: (ad, err) {
           debugPrint('BannerAd failed to load: $err');
           ad.dispose();
+          if (mounted) {
+            setState(() {
+              _isLoaded = false;
+              _bannerAd = null;
+            });
+          }
         },
       ),
     )..load();
@@ -55,6 +63,11 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
         child: AdWidget(ad: _bannerAd!),
       );
     }
-    return const SizedBox();
+    // AdMob expects a stable container space. Shrinking/expanding bottom bars 
+    // dynamically can cause impression failures or invalid traffic signals.
+    return SizedBox(
+      width: AdSize.banner.width.toDouble(),
+      height: AdSize.banner.height.toDouble(),
+    );
   }
 }

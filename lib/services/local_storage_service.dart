@@ -92,4 +92,12 @@ class LocalStorageService {
       await Hive.box(_settingsBoxName).put('custom_questions', list);
     }
   }
+
+  bool getPrivacyPolicyAccepted() {
+    return Hive.box(_settingsBoxName).get('privacy_accepted', defaultValue: false);
+  }
+
+  Future<void> setPrivacyPolicyAccepted(bool value) async {
+    await Hive.box(_settingsBoxName).put('privacy_accepted', value);
+  }
 }
