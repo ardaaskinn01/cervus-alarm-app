@@ -86,7 +86,7 @@ class AlarmService {
         title: AppLocalizations.get('ringing_notification_title', locale),
         body: AppLocalizations.get('ringing_notification_body', locale),
         stopButton: null,
-        icon: null,
+        icon: 'launcher_icon',
       ),
     );
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../core/ad_helper.dart';
+import 'dart:io';
 
 class BannerAdWidget extends StatefulWidget {
   const BannerAdWidget({super.key});
@@ -15,37 +16,25 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   bool _isFailed = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Yükleme burada yapılıyor çünkü ekran genişliğini (MediaQuery) daha doğru okuyabiliyoruz.
-    if (_bannerAd == null && !_isFailed) {
-      _loadAd();
-    }
+  void initState() {
+    super.initState();
+    _loadAd();
   }
 
-  Future<void> _loadAd() async {
-    // Adaptive Banner: ekranın tüm genişliğini kullanır, fill rate çok daha yüksek.
-    final AnchoredAdaptiveBannerAdSize? adSize =
-        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-      MediaQuery.of(context).size.width.truncate(),
-    );
+  void _loadAd() {
+    // Güvenliği artırmak için standart banner boyutuna geri dönüyoruz.
+    // Adaptive Banner hesaplama sırasında null dönüp veya hata verebiliyor.
+    final adUnitId = AdHelper.bannerAdUnitId;
 
-    if (adSize == null) {
-      debugPrint('BannerAd: Could not get adaptive ad size.');
-      if (mounted) setState(() => _isFailed = true);
-      return;
-    }
-
-    BannerAd(
-      adUnitId: AdHelper.bannerAdUnitId,
+    _bannerAd = BannerAd(
+      adUnitId: adUnitId,
       request: const AdRequest(),
-      size: adSize,
+      size: AdSize.banner, // Garantili ve stabil standart boyut (320x50)
       listener: BannerAdListener(
         onAdLoaded: (ad) {
           debugPrint('BannerAd loaded ✅');
           if (mounted) {
             setState(() {
-              _bannerAd = ad as BannerAd;
               _isLoaded = true;
               _isFailed = false;
             });
@@ -74,21 +63,27 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Yüklendi ve reklam hazır: göster.
     if (_isLoaded && _bannerAd != null) {
-      return SizedBox(
+      return Container(
+        alignment: Alignment.center,
         width: _bannerAd!.size.width.toDouble(),
         height: _bannerAd!.size.height.toDouble(),
         child: AdWidget(ad: _bannerAd!),
       );
     }
 
-    // AdMob reklam vermeyi reddetti (No Fill): boşluk bırakma.
+    // ADMOB HATA VERİYORSA BURAYA DÜŞER
+    // Eğer reklam çıkmıyorsa, siyah bir zemin veya boşluk bırakabiliriz test için,
+    // ancak production'da görünmez olması daha iyidir.
     if (_isFailed) {
+      // Geçici olarak hatayı anlamak için shrink değil, tamamen kaldırıyoruz
       return const SizedBox.shrink();
     }
 
-    // Yüklenirken yer tut (Layout Shift'i engeller).
-    return const SizedBox(height: 50);
+    // YÜKLENİYORSA BURAYA DÜŞER: 320x50 yer tutar (Mizanpaj oynamaması için)
+    return SizedBox(
+      width: AdSize.banner.width.toDouble(),
+      height: AdSize.banner.height.toDouble(),
+    );
   }
 }
