@@ -285,18 +285,22 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   final InAppReview inAppReview = InAppReview.instance;
 
                   try {
+                    // Try to show the native in-app review dialog first
                     if (await inAppReview.isAvailable()) {
-                      // OS determines if the dialog should actually show up.
-                      // If the user has already reviewed or reached the limit, this does nothing silently.
+                      // Note: requestReview is a fire-and-forget mission for the OS. 
+                      // It doesn't tell us if it actually appeared.
                       await inAppReview.requestReview();
-                    } else {
-                      // If the native dialog is strictly unavailable, open the store page directly.
-                      await inAppReview.openStoreListing(
-                        appStoreId: '6761625063', // Alarmly iOS ID
-                      );
                     }
+                    
+                    // Standard strategy for "Settings" rating buttons: 
+                    // Since requestReview might silently fail (due to quota), 
+                    // we immediately follow up by opening the store listing.
+                    // This ensures the user definitely gets to the rating page.
+                    await inAppReview.openStoreListing(
+                      appStoreId: '6761625063',
+                    );
                   } catch (e) {
-                    // Final fallback to URL launcher if anything goes wrong
+                    // Final safety fallback (URL launcher)
                     final url = Uri.parse(
                       Platform.isAndroid
                           ? "https://play.google.com/store/apps/details?id=com.cervus.alarmly"

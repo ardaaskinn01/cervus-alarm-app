@@ -14,6 +14,7 @@ import 'services/alarm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/app_localizations.dart';
 import 'views/onboarding/initial_setup_view.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -220,10 +221,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
 
       // 4. FIREBASE VE ADMOB — AdMob'u await ile başlatıyoruz!
-      // BannerAdWidget, HomeView açılır açılmaz reklam yüklemeye çalışır.
-      // Eğer MobileAds henüz initialize olmamışsa, tüm reklam istekleri
-      // geçersiz sayılır ve onAdFailedToLoad tetiklenir. Bu yüzden AWAIT şart!
       Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
+      
+      if (Platform.isIOS) {
+        // iOS için ATT İzni Talebi
+        final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+        if (status == TrackingStatus.notDetermined) {
+          // İzin penceresini göster
+          await AppTrackingTransparency.requestTrackingAuthorization();
+        }
+      }
+
       await MobileAds.instance.initialize();
 
       // 5. DİL SENKRONIZASYONU
