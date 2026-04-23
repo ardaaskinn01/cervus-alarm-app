@@ -16,18 +16,58 @@ class SettingsView extends ConsumerStatefulWidget {
   ConsumerState<SettingsView> createState() => _SettingsViewState();
 }
 
-class _SettingsViewState extends ConsumerState<SettingsView> {
+class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBindingObserver {
   late bool _vibrate;
   late int _puzzleCount;
   late List<Map<String, dynamic>> _customQuestions;
+  bool _didAppGoInactive = false;
+  final InAppReview _inAppReview = InAppReview.instance;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final storage = ref.read(localStorageServiceProvider);
     _vibrate = storage.getGlobalVibrate();
     _puzzleCount = storage.getPuzzleQuestionCount();
     _customQuestions = storage.getCustomQuestions();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      _didAppGoInactive = true;
+    }
+  }
+
+  Future<void> _rateApp() async {
+    const String appStoreId = '6761625063';
+    _didAppGoInactive = false;
+
+    try {
+      if (await _inAppReview.isAvailable()) {
+        await _inAppReview.requestReview();
+
+        // 3 saniye bekle ve uygulamanın inaktifleşip inaktifleşmediğini kontrol et
+        await Future.delayed(const Duration(seconds: 3));
+
+        if (!_didAppGoInactive && mounted) {
+          debugPrint('Popup açılmadı (kota?), mağazaya yönlendiriliyor...');
+          await _inAppReview.openStoreListing(appStoreId: appStoreId);
+        }
+      } else {
+        await _inAppReview.openStoreListing(appStoreId: appStoreId);
+      }
+    } catch (e) {
+      debugPrint('Rate app failed: $e');
+      await _inAppReview.openStoreListing(appStoreId: appStoreId);
+    }
   }
 
   void _toggleVibrate(bool value) async {
@@ -281,36 +321,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 title: AppLocalizations.get('settings_rate_title', locale),
                 subtitle: AppLocalizations.get('settings_rate_subtitle', locale),
                 iconColor: Colors.amber,
-                onTap: () async {
-                  final InAppReview inAppReview = InAppReview.instance;
-
-                  try {
-                    // Try to show the native in-app review dialog first
-                    if (await inAppReview.isAvailable()) {
-                      // Note: requestReview is a fire-and-forget mission for the OS. 
-                      // It doesn't tell us if it actually appeared.
-                      await inAppReview.requestReview();
-                    }
-                    
-                    // Standard strategy for "Settings" rating buttons: 
-                    // Since requestReview might silently fail (due to quota), 
-                    // we immediately follow up by opening the store listing.
-                    // This ensures the user definitely gets to the rating page.
-                    await inAppReview.openStoreListing(
-                      appStoreId: '6761625063',
-                    );
-                  } catch (e) {
-                    // Final safety fallback (URL launcher)
-                    final url = Uri.parse(
-                      Platform.isAndroid
-                          ? "https://play.google.com/store/apps/details?id=com.cervus.alarmly"
-                          : "https://apps.apple.com/app/id6761625063",
-                    );
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url, mode: LaunchMode.externalApplication);
-                    }
-                  }
-                },
+                onTap: _rateApp,
               ),
               _buildSettingTile(
                 icon: Icons.language_outlined,
