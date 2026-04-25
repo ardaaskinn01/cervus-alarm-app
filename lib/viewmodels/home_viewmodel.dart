@@ -8,7 +8,21 @@ import '../core/app_localizations.dart';
 class HomeViewModel extends Notifier<List<AlarmModel>> {
   @override
   List<AlarmModel> build() {
-    return ref.read(localStorageServiceProvider).getAlarms();
+    final alarms = ref.read(localStorageServiceProvider).getAlarms();
+    alarms.sort((a, b) {
+      if (a.hour != b.hour) return a.hour.compareTo(b.hour);
+      return a.minute.compareTo(b.minute);
+    });
+    return alarms;
+  }
+
+  List<AlarmModel> _getSortedAlarms() {
+    final alarms = ref.read(localStorageServiceProvider).getAlarms();
+    alarms.sort((a, b) {
+      if (a.hour != b.hour) return a.hour.compareTo(b.hour);
+      return a.minute.compareTo(b.minute);
+    });
+    return alarms;
   }
 
   Future<void> addAlarm(AlarmModel newAlarm) async {
@@ -18,8 +32,8 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     // 1. Önce veritabanına kaydet
     await storage.saveAlarm(newAlarm);
 
-    // 2. UI'ı HER DURUMDA hemen güncelle (alarm servisi hata verse bile)
-    state = List.from(storage.getAlarms());
+    // 2. UI'ı HER DURUMDA hemen güncelle
+    state = _getSortedAlarms();
 
     // 3. Alarm servisini ayrı try-catch'te çalıştır
     if (newAlarm.isActive) {
@@ -40,7 +54,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     await storage.updateAlarm(updatedAlarm);
 
     // 2. UI'ı HER DURUMDA hemen güncelle
-    state = List.from(storage.getAlarms());
+    state = _getSortedAlarms();
 
     // 3. Alarm servisini ayrı try-catch'te çalıştır
     try {
@@ -64,7 +78,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     await storage.updateAlarm(updatedAlarm);
 
     // 2. UI'ı HER DURUMDA hemen güncelle
-    state = List.from(storage.getAlarms());
+    state = _getSortedAlarms();
 
     // 3. Alarm servisini ayrı try-catch'te çalıştır
     try {
@@ -94,7 +108,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       );
 
       await storage.updateAlarm(snoozedAlarm);
-      state = List.from(storage.getAlarms());
+      state = _getSortedAlarms();
 
       try {
         final locale = ref.read(localeProvider);
@@ -114,7 +128,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     await storage.deleteAlarm(id);
 
     // 2. UI'ı HER DURUMDA hemen güncelle
-    state = List.from(storage.getAlarms());
+    state = _getSortedAlarms();
 
     // 3. Alarm servisini ayrı try-catch'te çalıştır
     try {

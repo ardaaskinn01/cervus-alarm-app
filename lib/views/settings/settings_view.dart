@@ -48,25 +48,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
 
   Future<void> _rateApp() async {
     const String appStoreId = '6761625063';
-    _didAppGoInactive = false;
-
     try {
-      if (await _inAppReview.isAvailable()) {
-        await _inAppReview.requestReview();
-
-        // 3 saniye bekle ve uygulamanın inaktifleşip inaktifleşmediğini kontrol et
-        await Future.delayed(const Duration(seconds: 3));
-
-        if (!_didAppGoInactive && mounted) {
-          debugPrint('Popup açılmadı (kota?), mağazaya yönlendiriliyor...');
-          await _inAppReview.openStoreListing(appStoreId: appStoreId);
-        }
-      } else {
-        await _inAppReview.openStoreListing(appStoreId: appStoreId);
-      }
+      await _inAppReview.openStoreListing(appStoreId: appStoreId);
     } catch (e) {
       debugPrint('Rate app failed: $e');
-      await _inAppReview.openStoreListing(appStoreId: appStoreId);
+      final url = Uri.parse(
+        Platform.isAndroid
+            ? "https://play.google.com/store/apps/details?id=com.cervus.alarmly"
+            : "https://apps.apple.com/app/id6761625063",
+      );
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
     }
   }
 

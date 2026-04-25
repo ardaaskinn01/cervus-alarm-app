@@ -106,7 +106,17 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
           }
         } else {
           // Kapatma Modu
-          await ref.read(alarmServiceProvider).stopAlarm(widget.alarmId);
+          // Alarmi pasif yap (Örn: Bir kez çalan alarmlar için)
+          try {
+            final alarms = ref.read(homeViewModelProvider);
+            final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
+            await ref.read(homeViewModelProvider.notifier).toggleAlarm(currentAlarm, false);
+          } catch (e) {
+            debugPrint("Alarm pasif yapılamadı: $e");
+            // Kritik değil, devam et
+            await ref.read(alarmServiceProvider).stopAlarm(widget.alarmId);
+          }
+
           if (mounted) {
             Navigator.pushReplacement(
               context,
