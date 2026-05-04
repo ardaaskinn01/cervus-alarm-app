@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.1.5</string>
+	<string>2.1.6</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>66</string>
+	<string>67</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -60,6 +60,8 @@
 	<string>Mikrofon izni gerekmez ancak alarm sesleri için frameworkler gereksinim duyabilir.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Barkod ve QR kod okutarak alarmınızı kapatabilmeniz için kameraya erişilmesi gerekmektedir.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Özel alarm sesi olarak kullanmak istediğiniz ses dosyasını seçebilmeniz için medya kütüphanesine erişilmesi gerekmektedir.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
