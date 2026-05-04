@@ -28,6 +28,9 @@ class AlarmModel extends HiveObject {
   @HiveField(7)
   String label;
 
+  @HiveField(8, defaultValue: 'math')
+  String stopMethod;
+
   AlarmModel({
     required this.id,
     required this.hour,
@@ -37,6 +40,7 @@ class AlarmModel extends HiveObject {
     this.soundPath = 'default',
     this.vibrate = true,
     this.label = '',
+    this.stopMethod = 'math',
   });
 
   // To JSON
@@ -50,6 +54,7 @@ class AlarmModel extends HiveObject {
       'soundPath': soundPath,
       'vibrate': vibrate,
       'label': label,
+      'stopMethod': stopMethod,
     };
   }
 
@@ -64,6 +69,7 @@ class AlarmModel extends HiveObject {
       soundPath: json['soundPath'] ?? 'default',
       vibrate: json['vibrate'] ?? true,
       label: json['label'] ?? '',
+      stopMethod: json['stopMethod'] ?? 'math',
     );
   }
 
@@ -76,6 +82,7 @@ class AlarmModel extends HiveObject {
     String? soundPath,
     bool? vibrate,
     String? label,
+    String? stopMethod,
   }) {
     return AlarmModel(
       id: id ?? this.id,
@@ -86,6 +93,7 @@ class AlarmModel extends HiveObject {
       soundPath: soundPath ?? this.soundPath,
       vibrate: vibrate ?? this.vibrate,
       label: label ?? this.label,
+      stopMethod: stopMethod ?? this.stopMethod,
     );
   }
 }

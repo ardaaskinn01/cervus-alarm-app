@@ -8,7 +8,7 @@ import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../../services/local_storage_service.dart';
 import '../home/success_view.dart';
-import '../components/banner_ad_widget.dart';
+
 
 class PuzzleView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -331,7 +331,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
                   ),
                 ),
               ),
-              const SafeArea(child: BannerAdWidget()),
+
             ],
           ),
         ),

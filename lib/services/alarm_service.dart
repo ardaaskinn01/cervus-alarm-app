@@ -63,11 +63,15 @@ class AlarmService {
       alarmTime = alarmTime.add(const Duration(days: 1));
     }
 
-    // Melodi seçimini belirle
-    String audioPathAsset = 'assets/audio/hard_alarm.mp3';
-    if (alarm.soundPath == 'soft_alarm' || alarm.soundPath == 'assets/audio/soft_alarm.mp3') {
+    // Ses dosyasını belirle (Özel ses mi yoksa asset mi?)
+    String audioPathAsset = 'assets/audio/hard_alarm.mp3'; // Varsayılan
+    
+    if (alarm.soundPath.startsWith('/')) {
+      // Eğer yol '/' ile başlıyorsa bu bir dosya yoludur (custom sound)
+      audioPathAsset = alarm.soundPath;
+    } else if (alarm.soundPath.contains('soft_alarm')) {
        audioPathAsset = 'assets/audio/soft_alarm.mp3';
-    } else if (alarm.soundPath == 'modern_alarm' || alarm.soundPath == 'assets/audio/modern_alarm.mp3') {
+    } else if (alarm.soundPath.contains('modern_alarm')) {
        audioPathAsset = 'assets/audio/modern_alarm.mp3';
     }
 
@@ -76,9 +80,9 @@ class AlarmService {
       dateTime: alarmTime,
       assetAudioPath: audioPathAsset,
       volumeSettings: VolumeSettings.fade(
-        volume: 1.0,
-        fadeDuration: const Duration(seconds: 3),
-        volumeEnforced: false, // iOS'ta true kullanmak ses sistemini bloklayabiliyor
+        volume: 0.8, // %100 yerine %80 ile başlatmak çakışmaları azaltabilir
+        fadeDuration: const Duration(seconds: 5),
+        volumeEnforced: Platform.isAndroid, // Android'de ses kontrolünü zorla
       ),
       vibrate: _storage.getGlobalVibrate(),
       warningNotificationOnKill: true,

@@ -15,6 +15,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/app_localizations.dart';
 import 'views/onboarding/initial_setup_view.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'services/revenuecat_service.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -222,6 +223,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       // 4. FIREBASE VE ADMOB — AdMob'u await ile başlatıyoruz!
       Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
+      
+      // REVENUE CAT BAŞLAT
+      await RevenueCatService.init(ref);
       
       if (Platform.isIOS) {
         // iOS için ATT İzni Talebi

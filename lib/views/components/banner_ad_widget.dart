@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 import 'dart:io';
 
-class BannerAdWidget extends StatefulWidget {
+class BannerAdWidget extends ConsumerStatefulWidget {
   const BannerAdWidget({super.key});
 
   @override
-  State<BannerAdWidget> createState() => _BannerAdWidgetState();
+  ConsumerState<BannerAdWidget> createState() => _BannerAdWidgetState();
 }
 
-class _BannerAdWidgetState extends State<BannerAdWidget> {
+class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
   bool _isFailed = false;
@@ -18,6 +20,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
+    // Delay loading to allow build to complete so we can read provider safely if needed,
+    // actually we can check provider in loadAd or build.
     _loadAd();
   }
 
@@ -63,6 +67,12 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isPremium = ref.watch(isPremiumProvider);
+
+    if (isPremium) {
+      return const SizedBox.shrink();
+    }
+
     if (_isLoaded && _bannerAd != null) {
       return Container(
         alignment: Alignment.center,

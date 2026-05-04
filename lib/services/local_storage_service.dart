@@ -100,4 +100,23 @@ class LocalStorageService {
   Future<void> setPrivacyPolicyAccepted(bool value) async {
     await Hive.box(_settingsBoxName).put('privacy_accepted', value);
   }
+
+  List<Map<String, dynamic>> getCustomSounds() {
+    final list = Hive.box(_settingsBoxName).get('custom_sounds', defaultValue: []);
+    return List<Map<String, dynamic>>.from(list.map((e) => Map<String, dynamic>.from(e)));
+  }
+
+  Future<void> addCustomSound(String name, String path) async {
+    final list = getCustomSounds();
+    list.add({'name': name, 'path': path});
+    await Hive.box(_settingsBoxName).put('custom_sounds', list);
+  }
+
+  Future<void> removeCustomSound(int index) async {
+    final list = getCustomSounds();
+    if (index >= 0 && index < list.length) {
+      list.removeAt(index);
+      await Hive.box(_settingsBoxName).put('custom_sounds', list);
+    }
+  }
 }

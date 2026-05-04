@@ -5,7 +5,10 @@ import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
 import '../../models/alarm_model.dart';
 import '../../viewmodels/home_viewmodel.dart';
+import '../../services/revenuecat_service.dart';
+import '../../services/local_storage_service.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart'; // Önizleme için
+import 'package:audioplayers/audioplayers.dart';
 
 class AddAlarmBottomSheet extends ConsumerStatefulWidget {
   final AlarmModel? existingAlarm;
@@ -19,22 +22,28 @@ class AddAlarmBottomSheet extends ConsumerStatefulWidget {
 class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   late DateTime selectedTime;
   late List<int> selectedDays;
-  late String selectedSound; // Yeni: Ses seçimi
+  late String selectedSound; 
+  late String selectedStopMethod;
   late TextEditingController labelController;
+  late List<Map<String, dynamic>> _customSounds;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    _customSounds = ref.read(localStorageServiceProvider).getCustomSounds();
     if (widget.existingAlarm != null) {
       final now = DateTime.now();
       selectedTime = DateTime(now.year, now.month, now.day, widget.existingAlarm!.hour, widget.existingAlarm!.minute);
       selectedDays = List.from(widget.existingAlarm!.repeatDays);
       selectedSound = widget.existingAlarm!.soundPath;
+      selectedStopMethod = widget.existingAlarm!.stopMethod;
       labelController = TextEditingController(text: widget.existingAlarm!.label);
     } else {
       selectedTime = DateTime.now();
       selectedDays = [];
       selectedSound = 'assets/audio/hard_alarm.mp3'; // Varsayılan ses
+      selectedStopMethod = 'math';
       labelController = TextEditingController();
     }
   }
@@ -42,6 +51,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   @override
   void dispose() {
     FlutterRingtonePlayer().stop(); // Önizlemeyi durdur
+    _audioPlayer.dispose();
     labelController.dispose();
     super.dispose();
   }
@@ -66,6 +76,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         soundPath: selectedSound, // Seçilen sesi kaydet
         isActive: true,
         label: labelController.text,
+        stopMethod: selectedStopMethod,
       );
       await ref.read(homeViewModelProvider.notifier).editAlarm(updatedAlarm);
     } else {
@@ -77,12 +88,14 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         repeatDays: selectedDays,
         soundPath: selectedSound, // Seçilen sesi kaydet
         label: labelController.text,
+        stopMethod: selectedStopMethod,
       );
       await ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
     
     // 🎵 Kaydettikten sonra çalan önizlemeyi hemen durdur
     FlutterRingtonePlayer().stop();
+    await _audioPlayer.stop();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -237,14 +250,46 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _melodyChip('Hard', 'assets/audio/hard_alarm.mp3'),
-                    const SizedBox(width: 8),
-                    _melodyChip('Soft', 'assets/audio/soft_alarm.mp3'),
-                    const SizedBox(width: 8),
-                    _melodyChip('Modern', 'assets/audio/modern_alarm.mp3'),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _melodyChip('Hard', 'assets/audio/hard_alarm.mp3', false),
+                      const SizedBox(width: 8),
+                      _melodyChip('Soft', 'assets/audio/soft_alarm.mp3', false),
+                      const SizedBox(width: 8),
+                      _melodyChip('Modern', 'assets/audio/modern_alarm.mp3', false),
+                      ..._customSounds.map((s) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: _melodyChip(s['name'] ?? 'Özel Ses', s['path'] ?? '', true),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Stop Method Selector
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    AppLocalizations.get('add_stop_method', locale),
+                    style: const TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _methodChip('Matematik', 'math', true),
+                      _methodChip('Salla', 'shake', ref.read(isPremiumProvider)),
+                      _methodChip('Yazı', 'typing', ref.read(isPremiumProvider)),
+                      _methodChip('Hafıza', 'memory', ref.read(isPremiumProvider)),
+                      _methodChip('QR / Barkod', 'qr', ref.read(isPremiumProvider)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -263,7 +308,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
     );
   }
 
-  Widget _melodyChip(String label, String path) {
+  Widget _melodyChip(String label, String path, bool isCustom) {
     final bool isSelected = selectedSound == path;
     return GestureDetector(
       onTap: () async {
@@ -272,12 +317,18 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         });
         // 🎵 Ses Önizleme (Preview)
         try {
-          await FlutterRingtonePlayer().stop(); // Varsa çalan sesi tamamen durdurana kadar bekle
-          await FlutterRingtonePlayer().play(
-            fromAsset: path, // Seçilen sesi çal
-            looping: false,
-            volume: 0.8,
-          );
+          await FlutterRingtonePlayer().stop(); 
+          await _audioPlayer.stop();
+          
+          if (isCustom) {
+            await _audioPlayer.play(DeviceFileSource(path));
+          } else {
+            await FlutterRingtonePlayer().play(
+              fromAsset: path, 
+              looping: false,
+              volume: 0.8,
+            );
+          }
         } catch (e) {
           debugPrint("Ses çalınamadı: $e");
         }
@@ -300,5 +351,80 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         ),
       ),
     );
+  }
+
+  Widget _methodChip(String label, String value, bool isUnlocked) {
+    final bool isSelected = selectedStopMethod == value;
+    return GestureDetector(
+      onTap: () {
+        if (!isUnlocked) {
+           _showPremiumLock(context);
+           return;
+        }
+        setState(() {
+          selectedStopMethod = value;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.white12,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.white24 : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isUnlocked) ...[
+              const Icon(Icons.lock, size: 16, color: Colors.amber),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: !isUnlocked ? Colors.white38 : (isSelected ? Colors.white : Colors.white70),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPremiumLock(BuildContext context) {
+      showDialog(
+          context: context,
+          builder: (ctx) => Dialog(
+            backgroundColor: AppTheme.cardColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.lock_rounded, size: 64, color: Colors.amber),
+                  const SizedBox(height: 16),
+                  const Text('Pro Özellik', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  const Text('Farklı alarm kapatma yöntemleri sadece Alarmly Pro kullanıcılarına özeldir.', style: TextStyle(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                    onPressed: () {
+                       Navigator.pop(ctx);
+                       Navigator.pop(context); // Bottom sheet'i de kapat
+                       // Burada ayarlara gidilebilir
+                    },
+                    child: const Text('Proya Geç (Ayarlar)'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      );
   }
 }

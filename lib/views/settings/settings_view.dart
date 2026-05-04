@@ -8,6 +8,9 @@ import '../../services/local_storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:in_app_review/in_app_review.dart';
 import '../components/banner_ad_widget.dart';
+import '../../services/revenuecat_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
@@ -20,7 +23,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
   late bool _vibrate;
   late int _puzzleCount;
   late List<Map<String, dynamic>> _customQuestions;
-  bool _didAppGoInactive = false;
+  late List<Map<String, dynamic>> _customSounds;
   final InAppReview _inAppReview = InAppReview.instance;
 
   @override
@@ -31,6 +34,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
     _vibrate = storage.getGlobalVibrate();
     _puzzleCount = storage.getPuzzleQuestionCount();
     _customQuestions = storage.getCustomQuestions();
+    _customSounds = storage.getCustomSounds();
   }
 
   @override
@@ -41,9 +45,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
-      _didAppGoInactive = true;
-    }
+    // Uygulama durumu değişiklikleri burada izlenebilir
   }
 
   Future<void> _rateApp() async {
@@ -72,6 +74,84 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
     final current = ref.read(localeProvider);
     final newLang = current == 'tr' ? 'en' : 'tr';
     ref.read(localeProvider.notifier).setLocale(newLang);
+  }
+
+  void _showPremiumDialog() {
+    final locale = ref.read(localeProvider);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.star_rounded, size: 64, color: Colors.amber),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.get('premium_popup_title', locale),
+                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              _buildPremiumFeatureRow(Icons.music_note, AppLocalizations.get('premium_popup_feature_1', locale)),
+              _buildPremiumFeatureRow(Icons.extension, AppLocalizations.get('premium_popup_feature_2', locale)),
+              _buildPremiumFeatureRow(Icons.block, AppLocalizations.get('premium_popup_feature_3', locale)),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await RevenueCatService.purchasePremium(ref, context);
+                  },
+                  child: Text(
+                    AppLocalizations.get('premium_popup_buy', locale),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await RevenueCatService.restorePurchases(ref);
+                },
+                child: Text(AppLocalizations.get('premium_popup_restore', locale), style: const TextStyle(color: Colors.white70)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(AppLocalizations.get('premium_popup_cancel', locale), style: const TextStyle(color: Colors.white54)),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumFeatureRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.amber, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showCustomQuestionDialog() {
@@ -180,9 +260,103 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
     );
   }
 
+  void _showCustomSoundDialog() {
+    final isPremium = ref.read(isPremiumProvider);
+    if (!isPremium) {
+       _showPremiumDialog();
+       return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.cardColor,
+              title: const Text('Özel Alarm Sesleri', style: TextStyle(color: Colors.white)),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_customSounds.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("Henüz özel bir ses yüklemediniz.", style: TextStyle(color: Colors.white54)),
+                      )
+                    else
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _customSounds.length,
+                          itemBuilder: (context, index) {
+                            final sound = _customSounds[index];
+                            return ListTile(
+                              leading: const Icon(Icons.music_note, color: Colors.amber),
+                              title: Text(sound['name'] ?? '', style: const TextStyle(color: Colors.white)),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_rounded, color: Colors.redAccent),
+                                onPressed: () async {
+                                  await ref.read(localStorageServiceProvider).removeCustomSound(index);
+                                  setState(() {
+                                    _customSounds = ref.read(localStorageServiceProvider).getCustomSounds();
+                                  });
+                                  setDialogState(() {});
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Yeni Ses Yükle'),
+                      onPressed: () async {
+                        try {
+                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio);
+                          if (result != null && result.files.single.path != null) {
+                            File file = File(result.files.single.path!);
+                            String name = result.files.single.name;
+                            final directory = await getApplicationDocumentsDirectory();
+                            final String newPath = '${directory.path}/$name';
+                            await file.copy(newPath);
+                            await ref.read(localStorageServiceProvider).addCustomSound(name, newPath);
+                            setState(() {
+                              _customSounds = ref.read(localStorageServiceProvider).getCustomSounds();
+                            });
+                            setDialogState(() {});
+                          }
+                        } catch (e) {
+                          debugPrint("Hata: $e");
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Kapat', style: TextStyle(color: Colors.white54)),
+                )
+              ],
+            );
+          }
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
+    final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -212,6 +386,31 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             children: [
               const SizedBox(height: 10),
+              
+              if (!isPremium)
+                _buildSettingTile(
+                  icon: Icons.workspace_premium_rounded,
+                  title: AppLocalizations.get('settings_premium_title', locale),
+                  subtitle: AppLocalizations.get('settings_premium_subtitle', locale),
+                  iconColor: Colors.amber,
+                  onTap: _showPremiumDialog,
+                )
+              else
+                _buildSettingTile(
+                  icon: Icons.star_rounded,
+                  title: 'Alarmly Pro',
+                  subtitle: AppLocalizations.get('settings_premium_active', locale),
+                  iconColor: Colors.amber,
+                  trailing: const Icon(Icons.check_circle_rounded, color: Colors.amber),
+                ),
+              _buildSettingTile(
+                icon: Icons.queue_music_rounded,
+                title: 'Özel Alarm Sesleri', //TODO localize
+                subtitle: 'Kendi müzik ve ses dosyalarını yükle',
+                iconColor: AppTheme.primaryColor,
+                onTap: _showCustomSoundDialog,
+                trailing: !isPremium ? const Icon(Icons.lock, color: Colors.amber, size: 20) : null,
+              ),
               _buildSettingTile(
                 icon: Icons.vibration,
                 title: AppLocalizations.get('settings_vibration_title', locale),
@@ -322,6 +521,22 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                 subtitle: AppLocalizations.get('settings_language_subtitle', locale),
                 iconColor: Colors.blueAccent,
                 onTap: _toggleLanguage,
+              ),
+              _buildSettingTile(
+                icon: Icons.apps_rounded,
+                title: AppLocalizations.get('settings_more_apps_title', locale),
+                subtitle: AppLocalizations.get('settings_more_apps_subtitle', locale),
+                iconColor: Colors.deepPurpleAccent,
+                onTap: () async {
+                  final url = Uri.parse(
+                    Platform.isAndroid
+                        ? "https://play.google.com/store/apps/developer?id=Cervus+App+Studio"
+                        : "https://apps.apple.com/tr/developer/cervus-digital/id1889669486",
+                  );
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
               _buildSettingTile(
                 icon: Icons.shield_outlined,

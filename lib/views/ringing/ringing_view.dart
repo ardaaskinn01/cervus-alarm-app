@@ -5,8 +5,12 @@ import '../../core/app_localizations.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import 'puzzle_view.dart';
+import 'shake_view.dart';
+import 'typing_view.dart';
+import 'memory_view.dart';
+import 'barcode_scanner_view.dart';
 import '../home/success_view.dart';
-import '../components/banner_ad_widget.dart';
+
 
 class RingingView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -40,24 +44,41 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
     super.dispose();
   }
 
-  void _onSnoozePressed(BuildContext context) {
-    // Erteleme için Puzzle'a git
+  void _navigateToStopTask(BuildContext context, WidgetRef ref, bool isSnooze) {
+    String stopMethod = 'math';
+    try {
+      final alarms = ref.read(homeViewModelProvider);
+      final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
+      stopMethod = currentAlarm.stopMethod;
+    } catch (e) {
+      debugPrint("Alarm bulunamadı, math ile devam ediliyor.");
+    }
+
+    Widget nextView;
+    if (stopMethod == 'shake') {
+      nextView = ShakeView(alarmId: widget.alarmId, isSnooze: isSnooze);
+    } else if (stopMethod == 'typing') {
+      nextView = TypingView(alarmId: widget.alarmId, isSnooze: isSnooze);
+    } else if (stopMethod == 'memory') {
+      nextView = MemoryView(alarmId: widget.alarmId, isSnooze: isSnooze);
+    } else if (stopMethod == 'qr') {
+      nextView = BarcodeScannerView(alarmId: widget.alarmId, isSnooze: isSnooze);
+    } else {
+      nextView = PuzzleView(alarmId: widget.alarmId, isSnooze: isSnooze);
+    }
+
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => PuzzleView(alarmId: widget.alarmId, isSnooze: true),
-      ),
+      MaterialPageRoute(builder: (context) => nextView),
     );
   }
 
+  void _onSnoozePressed(BuildContext context, WidgetRef ref) {
+    _navigateToStopTask(context, ref, true);
+  }
+
   void _onWakeUpPressed(BuildContext context, WidgetRef ref) {
-    // Tamamen kapatmak için de Puzzle'a git
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PuzzleView(alarmId: widget.alarmId, isSnooze: false),
-      ),
-    );
+    _navigateToStopTask(context, ref, false);
   }
 
   @override
@@ -65,7 +86,7 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
     final locale = ref.watch(localeProvider);
 
     return Scaffold(
-      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
+
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -189,7 +210,7 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
                     const SizedBox(height: 24),
                     // Snooze Button (Secondary Action)
                     TextButton(
-                      onPressed: () => _onSnoozePressed(context),
+                      onPressed: () => _onSnoozePressed(context, ref),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white.withOpacity(0.5),
                         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
