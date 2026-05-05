@@ -1,14 +1,17 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
+import '../../core/ad_helper.dart';
 import '../../models/alarm_model.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/revenuecat_service.dart';
 import '../../services/local_storage_service.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart'; // Önizleme için
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AddAlarmBottomSheet extends ConsumerStatefulWidget {
   final AlarmModel? existingAlarm;
@@ -22,15 +25,22 @@ class AddAlarmBottomSheet extends ConsumerStatefulWidget {
 class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   late DateTime selectedTime;
   late List<int> selectedDays;
-  late String selectedSound; 
+  late String selectedSound;
   late String selectedStopMethod;
   late TextEditingController labelController;
   late List<Map<String, dynamic>> _customSounds;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
+  // Ödüllü reklam
+  RewardedAd? _rewardedAd;
+  bool _isLoadingAd = false;
+
+  // Bu bottom sheet oturumunda reklam izlenip kilit açıldı mı?
+  bool _rewardUnlockedThisSession = false;
+
   @override
   void initState() {
-    super.initState();
+    super.initState();;
     _customSounds = ref.read(localStorageServiceProvider).getCustomSounds();
     if (widget.existingAlarm != null) {
       final now = DateTime.now();
@@ -39,20 +49,92 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       selectedSound = widget.existingAlarm!.soundPath;
       selectedStopMethod = widget.existingAlarm!.stopMethod;
       labelController = TextEditingController(text: widget.existingAlarm!.label);
+      // Mevcut alarmda kilit açık kalabilir (reklam daha önce izlendiyse)
+      _rewardUnlockedThisSession = widget.existingAlarm!.rewardUnlocked;
     } else {
       selectedTime = DateTime.now();
       selectedDays = [];
-      selectedSound = 'assets/audio/hard_alarm.mp3'; // Varsayılan ses
+      selectedSound = 'assets/audio/hard_alarm.mp3';
       selectedStopMethod = 'math';
       labelController = TextEditingController();
+      _rewardUnlockedThisSession = false;
     }
+
+    _loadRewardedAd();
+  }
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: AdHelper.rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          setState(() {
+            _rewardedAd = ad;
+            _isLoadingAd = false;
+          });
+          debugPrint('RewardedAd loaded.');
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          setState(() {
+            _rewardedAd = null;
+            _isLoadingAd = false;
+          });
+          debugPrint('RewardedAd failed to load: $error');
+        },
+      ),
+    );
+  }
+
+  void _showRewardedAd() {
+    if (_rewardedAd == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.get('reward_failed_toast', ref.read(localeProvider))), backgroundColor: Colors.orange),
+      );
+      _loadRewardedAd();
+      return;
+    }
+
+    setState(() => _isLoadingAd = true);
+
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _rewardedAd = null;
+        setState(() => _isLoadingAd = false);
+        _loadRewardedAd(); // Sonraki kullanım için önceden yükle
+      },
+      onAdFailedToShowFullScreenContent: (ad, err) {
+        ad.dispose();
+        _rewardedAd = null;
+        setState(() => _isLoadingAd = false);
+        debugPrint('RewardedAd failed to show: $err');
+      },
+    );
+
+    _rewardedAd!.show(
+      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+        // Kullanıcı reklamı tamamladı → kilidi geçici aç
+        setState(() {
+          _rewardUnlockedThisSession = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.get('reward_unlocked_toast', ref.read(localeProvider))),
+            backgroundColor: Colors.green,
+          ),
+        );
+      },
+    );
+    _rewardedAd = null;
   }
 
   @override
   void dispose() {
-    FlutterRingtonePlayer().stop(); // Önizlemeyi durdur
+    FlutterRingtonePlayer().stop();
     _audioPlayer.dispose();
     labelController.dispose();
+    _rewardedAd?.dispose();
     super.dispose();
   }
 
@@ -73,10 +155,11 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         hour: selectedTime.hour,
         minute: selectedTime.minute,
         repeatDays: selectedDays,
-        soundPath: selectedSound, // Seçilen sesi kaydet
+        soundPath: selectedSound,
         isActive: true,
         label: labelController.text,
         stopMethod: selectedStopMethod,
+        rewardUnlocked: _rewardUnlockedThisSession,
       );
       await ref.read(homeViewModelProvider.notifier).editAlarm(updatedAlarm);
     } else {
@@ -86,14 +169,14 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         minute: selectedTime.minute,
         isActive: true,
         repeatDays: selectedDays,
-        soundPath: selectedSound, // Seçilen sesi kaydet
+        soundPath: selectedSound,
         label: labelController.text,
         stopMethod: selectedStopMethod,
+        rewardUnlocked: _rewardUnlockedThisSession,
       );
       await ref.read(homeViewModelProvider.notifier).addAlarm(newAlarm);
     }
-    
-    // 🎵 Kaydettikten sonra çalan önizlemeyi hemen durdur
+
     FlutterRingtonePlayer().stop();
     await _audioPlayer.stop();
 
@@ -115,6 +198,9 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
+    final isPremium = ref.watch(isPremiumProvider);
+    // Yöntemler kilitli mi? Premium yoksa VE bu oturumda reklam ödülü de kazanılmadıysa kilitli
+    final methodsUnlocked = isPremium || _rewardUnlockedThisSession;
 
     return Container(
       decoration: const BoxDecoration(
@@ -131,7 +217,6 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Pull Handle
                 Container(
                   width: 40,
                   height: 5,
@@ -150,7 +235,6 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Cupertino Time Picker
                 SizedBox(
                   height: 180,
                   child: CupertinoTheme(
@@ -177,7 +261,6 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Label Input
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -202,7 +285,6 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Days Selector
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -241,11 +323,10 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Melody Selector (New)
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    AppLocalizations.get('add_melody', locale), // add_melody lokalizasyonu gerekiyor
+                    AppLocalizations.get('add_melody', locale),
                     style: const TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                 ),
@@ -254,22 +335,21 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _melodyChip('Hard', 'assets/audio/hard_alarm.mp3', false),
+                      _melodyChip(AppLocalizations.get('melody_hard', locale), 'assets/audio/hard_alarm.mp3', false),
                       const SizedBox(width: 8),
-                      _melodyChip('Soft', 'assets/audio/soft_alarm.mp3', false),
+                      _melodyChip(AppLocalizations.get('melody_soft', locale), 'assets/audio/soft_alarm.mp3', false),
                       const SizedBox(width: 8),
-                      _melodyChip('Modern', 'assets/audio/modern_alarm.mp3', false),
+                      _melodyChip(AppLocalizations.get('melody_modern', locale), 'assets/audio/modern_alarm.mp3', false),
                       ..._customSounds.map((s) {
                         return Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: _melodyChip(s['name'] ?? 'Özel Ses', s['path'] ?? '', true),
+                          child: _melodyChip(s['name'] ?? AppLocalizations.get('melody_custom', locale), s['path'] ?? '', true),
                         );
                       }).toList(),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Stop Method Selector
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -278,19 +358,25 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // Stop methods — matematik her zaman açık, diğerleri kilitli veya açık
                 SizedBox(
                   height: 48,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      _methodChip('Matematik', 'math', true),
-                      _methodChip('Salla', 'shake', ref.read(isPremiumProvider)),
-                      _methodChip('Yazı', 'typing', ref.read(isPremiumProvider)),
-                      _methodChip('Hafıza', 'memory', ref.read(isPremiumProvider)),
-                      _methodChip('QR / Barkod', 'qr', ref.read(isPremiumProvider)),
+                      _methodChip(AppLocalizations.get('method_math', locale), 'math', true),
+                      _methodChip(AppLocalizations.get('method_shake', locale), 'shake', methodsUnlocked),
+                      _methodChip(AppLocalizations.get('method_typing', locale), 'typing', methodsUnlocked),
+                      _methodChip(AppLocalizations.get('method_memory', locale), 'memory', methodsUnlocked),
+                      _methodChip(AppLocalizations.get('method_qr', locale), 'qr', methodsUnlocked),
                     ],
                   ),
                 ),
+                // Kilitli ise "Bir Kez Dene" butonu
+                if (!methodsUnlocked) ...[
+                  const SizedBox(height: 12),
+                  _buildTryOnceButton(),
+                ],
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -308,6 +394,40 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
     );
   }
 
+  Widget _buildTryOnceButton() {
+    final locale = ref.read(localeProvider);
+    return GestureDetector(
+
+      onTap: _isLoadingAd ? null : _showRewardedAd,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_rounded, size: 18, color: Colors.amber),
+            const SizedBox(width: 8),
+                  _isLoadingAd
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber))
+                : Text(
+                    AppLocalizations.get('reward_try_once', locale),
+                    style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+            const SizedBox(width: 4),
+            Text(
+              AppLocalizations.get('reward_try_once_desc', locale),
+              style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _melodyChip(String label, String path, bool isCustom) {
     final bool isSelected = selectedSound == path;
     return GestureDetector(
@@ -315,16 +435,15 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
         setState(() {
           selectedSound = path;
         });
-        // 🎵 Ses Önizleme (Preview)
         try {
-          await FlutterRingtonePlayer().stop(); 
+          await FlutterRingtonePlayer().stop();
           await _audioPlayer.stop();
-          
+
           if (isCustom) {
             await _audioPlayer.play(DeviceFileSource(path));
           } else {
             await FlutterRingtonePlayer().play(
-              fromAsset: path, 
+              fromAsset: path,
               looping: false,
               volume: 0.8,
             );
@@ -355,76 +474,89 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
 
   Widget _methodChip(String label, String value, bool isUnlocked) {
     final bool isSelected = selectedStopMethod == value;
+    // Kilitli ve matematik dışındaki yöntemler için blur efekti
+    final bool shouldBlur = !isUnlocked && value != 'math';
+
     return GestureDetector(
       onTap: () {
         if (!isUnlocked) {
-           _showPremiumLock(context);
-           return;
+          // Kilitli — tıklamayı engelle (buton zaten açıklamayı sağlıyor)
+          return;
         }
         setState(() {
           selectedStopMethod = value;
         });
       },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor : Colors.white12,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.white24 : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isUnlocked) ...[
-              const Icon(Icons.lock, size: 16, color: Colors.amber),
-              const SizedBox(width: 6),
-            ],
-            Text(
+      child: Stack(
+        children: [
+          // Chip kendisi
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primaryColor : Colors.white12,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected ? Colors.white24 : Colors.transparent,
+              ),
+            ),
+            child: Text(
               label,
               style: TextStyle(
-                color: !isUnlocked ? Colors.white38 : (isSelected ? Colors.white : Colors.white70),
+                color: isSelected ? Colors.white : Colors.white70,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
-          ],
-        ),
+          ),
+          // Blur overlay (kilitliyse)
+          if (shouldBlur)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 3.5, sigmaY: 3.5),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    color: Colors.black.withOpacity(0.25),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
   void _showPremiumLock(BuildContext context) {
-      showDialog(
-          context: context,
-          builder: (ctx) => Dialog(
-            backgroundColor: AppTheme.cardColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_rounded, size: 64, color: Colors.amber),
-                  const SizedBox(height: 16),
-                  const Text('Pro Özellik', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  const Text('Farklı alarm kapatma yöntemleri sadece Alarmly Pro kullanıcılarına özeldir.', style: TextStyle(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                    onPressed: () {
-                       Navigator.pop(ctx);
-                       Navigator.pop(context); // Bottom sheet'i de kapat
-                       // Burada ayarlara gidilebilir
-                    },
-                    child: const Text('Proya Geç (Ayarlar)'),
-                  ),
-                ],
+    final locale = ref.read(localeProvider);
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_rounded, size: 64, color: Colors.amber),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.get('premium_lock_title', locale), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.get('premium_lock_desc', locale), style: const TextStyle(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
+                },
+                child: Text(AppLocalizations.get('premium_lock_btn', locale)),
               ),
-            ),
+            ],
           ),
-      );
+        ),
+      ),
+    );
   }
 }

@@ -1,8 +1,12 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/app_localizations.dart';
+export 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+
 
 final isPremiumProvider = StateProvider<bool>((ref) => false);
 
@@ -23,46 +27,83 @@ class RevenueCatService {
     ref.read(isPremiumProvider.notifier).state = isPro;
   }
 
-  static Future<bool> purchasePremium(WidgetRef ref, BuildContext context) async {
+  static Future<Offerings?> getOfferings() async {
     try {
-      final offerings = await Purchases.getOfferings();
-      if (offerings.current != null) {
-        // Tek seferlik ödeme için 'lifetime' paketini önceliklendiriyoruz
-        final package = offerings.current!.lifetime ?? offerings.current!.availablePackages.first;
-        
-        final purchaseResult = await Purchases.purchasePackage(package);
-        final customerInfo = purchaseResult.customerInfo;
-        final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
-        ref.read(isPremiumProvider.notifier).state = isPro;
-        
-        if (isPro) {
+      return await Purchases.getOfferings();
+    } catch (e) {
+      debugPrint("Offerings hatası: $e");
+      return null;
+    }
+  }
+
+  static Future<bool> purchasePackage(WidgetRef ref, BuildContext context, Package package) async {
+    try {
+      final purchaseResult = await Purchases.purchasePackage(package);
+      final customerInfo = purchaseResult.customerInfo;
+      final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
+      ref.read(isPremiumProvider.notifier).state = isPro;
+      
+      if (isPro) {
+        if (context.mounted) {
+          final locale = ref.read(localeProvider);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Premium aktif edildi! 🎉"), backgroundColor: Colors.green),
+            SnackBar(content: Text(AppLocalizations.get('rc_success', locale)), backgroundColor: Colors.green),
           );
         }
-        return isPro;
-      } else {
+      }
+      return isPro;
+    } on PlatformException catch (e) {
+      var errorCode = PurchasesErrorHelper.getErrorCode(e);
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        debugPrint("Satın alma kullanıcı tarafından iptal edildi.");
+        return false;
+      }
+      debugPrint("Satın alma hatası: $e");
+      if (context.mounted) {
+        final locale = ref.read(localeProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Satın alınacak paket bulunamadı. Lütfen offerings ayarlarını kontrol edin."), backgroundColor: Colors.orange),
+          SnackBar(content: Text(AppLocalizations.get('rc_fail', locale)), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
-      debugPrint("Satın alma hatası: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Hata: ${e.toString()}"), backgroundColor: Colors.red),
-      );
+      debugPrint("Beklenmedik satın alma hatası: $e");
+      if (context.mounted) {
+        final locale = ref.read(localeProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("${AppLocalizations.get('rc_error', locale)}${e.toString()}"), backgroundColor: Colors.red),
+        );
+      }
     }
     return false;
   }
   
-  static Future<bool> restorePurchases(WidgetRef ref) async {
+  static Future<bool> restorePurchases(WidgetRef ref, BuildContext context) async {
     try {
       CustomerInfo customerInfo = await Purchases.restorePurchases();
       final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
       ref.read(isPremiumProvider.notifier).state = isPro;
+      
+      if (context.mounted) {
+        final locale = ref.read(localeProvider);
+        if (isPro) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.get('rc_restore_success', locale)), backgroundColor: Colors.green),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.get('rc_restore_none', locale)), backgroundColor: Colors.orange),
+          );
+        }
+      }
       return isPro;
     } catch (e) {
-       debugPrint("Geri yükleme hatası: $e");
+      debugPrint("Geri yükleme hatası: $e");
+      if (context.mounted) {
+        final locale = ref.read(localeProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.get('rc_restore_fail', locale)), backgroundColor: Colors.red),
+        );
+      }
     }
     return false;
   }

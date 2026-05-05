@@ -7,7 +7,6 @@ import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
 
-
 class TypingView extends ConsumerStatefulWidget {
   final int alarmId;
   final bool isSnooze;
@@ -31,6 +30,7 @@ class _TypingViewState extends ConsumerState<TypingView> {
     "Büyük hayaller uyanıkken gerçekleşir.",
     "Bugün kendimin en iyi versiyonu olacağım.",
     "Zorluklar beni yıldırmaz, beni güçlendirir.",
+    "Zamanımı en verimli şekilde kullanacağım.",
   ];
 
   final List<String> _enSentences = [
@@ -41,12 +41,12 @@ class _TypingViewState extends ConsumerState<TypingView> {
     "Big dreams are realized while you are awake.",
     "Today I will be the best version of myself.",
     "Challenges do not discourage me, they make me stronger.",
+    "I will use my time in the most efficient way.",
   ];
 
   @override
   void initState() {
     super.initState();
-    // We will initialize the sentence in didChangeDependencies because we need Provider/context for locale.
   }
 
   @override
@@ -79,10 +79,7 @@ class _TypingViewState extends ConsumerState<TypingView> {
   }
 
   Future<void> _finishTask() async {
-    // Focus'u kaybetmek için
     FocusScope.of(context).unfocus();
-    
-    // Küçük bir bekleme süresi, kullanıcının başardığını görmesi için
     await Future.delayed(const Duration(milliseconds: 300));
     
     if (widget.isSnooze) {
@@ -108,105 +105,108 @@ class _TypingViewState extends ConsumerState<TypingView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Birebir Aynısını Yaz!', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.backgroundColor,
-              AppTheme.gradientEndColor,
-              AppTheme.backgroundColor,
-            ],
-            stops: [0.0, 0.7, 1.0],
-          ),
+    final locale = ref.watch(localeProvider);
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(AppLocalizations.get('typing_title', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: true,
         ),
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              const Icon(Icons.keyboard_outlined, size: 80, color: Colors.white),
-              const SizedBox(height: 32),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white24, width: 2),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.backgroundColor,
+                AppTheme.gradientEndColor,
+                AppTheme.backgroundColor,
+              ],
+              stops: [0.0, 0.7, 1.0],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                const Icon(Icons.keyboard_outlined, size: 80, color: Colors.white),
+                const SizedBox(height: 32),
+                
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white24, width: 2),
+                    ),
+                    child: Text(
+                      _targetSentence,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        height: 1.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
-                    _targetSentence,
+                    AppLocalizations.get('typing_hint_2', locale),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      height: 1.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                    style: const TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: TextField(
+                    controller: _textController,
+                    onChanged: _onTextChanged,
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    maxLines: 3,
+                    minLines: 1,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.get('typing_textfield_hint', locale),
+                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Colors.transparent),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      contentPadding: const EdgeInsets.all(20),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'Büyük/küçük harf ve noktalama işaretlerine dikkat et.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 48),
-              
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: TextField(
-                  controller: _textController,
-                  onChanged: _onTextChanged,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                  maxLines: 3,
-                  minLines: 1,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: InputDecoration(
-                    hintText: 'Buraya yazın...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.transparent),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    contentPadding: const EdgeInsets.all(20),
-                  ),
-                ),
-              ),
-              const Spacer(),
-
-            ],
+                const Spacer(),
+              ],
+            ),
           ),
         ),
       ),

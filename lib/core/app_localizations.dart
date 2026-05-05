@@ -105,8 +105,64 @@ class AppLocalizations {
       'alarm_saved_warning': 'Alarm kuruldu! Lütfen uygulamayı arka planda açık bırakın. Alarmly pil ömrüne dosttur, şarj tüketmez.',
       'kill_warning_title': '⚠️ DİKKAT: Alarmınız Çalmayabilir!',
       'kill_warning_body': 'Uygulamayı tamamen kapattınız! Apple arka plan alarmlarının çalınmasını engeller. Lütfen uygulamayı ana ekrana dönerek açık bırakın.',
-      'ringing_notification_title': 'Zorlu Alarm - Uyanma Vakti!',
+      'ringing_notification_title': 'Alarmly - Uyandıran Alarm',
       'ringing_notification_body': 'Günün başlıyor, hadi ayılma vakti!',
+
+      // Custom Sounds
+      'custom_sound_title': 'Özel Alarm Sesleri',
+      'custom_sound_subtitle': 'Kendi müzik ve ses dosyalarını yükle',
+      'custom_sound_empty': 'Henüz özel bir ses yüklemediniz.',
+      'custom_sound_add': 'Yeni Ses Yükle',
+      'custom_sound_close': 'Kapat',
+
+      // Stop Methods
+      'method_math': 'Matematik',
+      'method_shake': 'Salla',
+      'method_typing': 'Yazı',
+      'method_memory': 'Hafıza',
+      'method_qr': 'QR / Barkod',
+
+      // Melody
+      'melody_custom': 'Özel Ses',
+      'melody_hard': 'Hard',
+      'melody_soft': 'Soft',
+      'melody_modern': 'Modern',
+
+      // Lock & Rewards
+      'premium_lock_title': 'Pro Özellik',
+      'premium_lock_desc': 'Farklı alarm kapatma yöntemleri sadece Alarmly Pro kullanıcılarına özeldir.',
+      'premium_lock_btn': 'Proya Geç (Ayarlar)',
+      'reward_try_once': 'Tek Seferlik Aç  🎬',
+      'reward_try_once_desc': '— Reklam izle, tüm yöntemleri aç',
+      'reward_unlocked_toast': 'Tüm kapatma yöntemleri bu alarm için açıldı! 🎉',
+      'reward_failed_toast': 'Reklam yüklenemedi, lütfen tekrar deneyin.',
+
+      // Stop Views
+      'typing_title': 'Birebir Aynısını Yaz!',
+      'typing_hint_2': 'Büyük/küçük harf ve noktalama işaretlerine dikkat et.',
+      'typing_textfield_hint': 'Buraya yazın...',
+      'shake_title': 'Ertelemek için Salla!',
+      'memory_title': 'Hafıza Oyunu',
+      'memory_subtitle': 'Kartları Eşleştir',
+      'memory_match': 'Eşleşen: ',
+      'qr_title': 'Herhangi Bir Barkod Okut',
+      'qr_subtitle': 'Mutfağa gidip bir ürün barkodu\nveya rastgele bir QR kod okutun.',
+      'math_zero_error': 'Sıfıra bölünemez! / Cannot divide by zero',
+      'math_remainder_error': 'Tam bölünmüyor! Lütfen kalansız bölünecek sayılar girin. (Örn: 10 / 2)',
+      
+      // RevenueCat & System
+      'rc_success': 'Premium aktif edildi! 🎉',
+      'rc_fail': 'Satın alma işlemi tamamlanamadı. Lütfen tekrar deneyin.',
+      'rc_error': 'Bir hata oluştu: ',
+      'rc_restore_success': 'Satın alımlar başarıyla geri yüklendi! 🎉',
+      'rc_restore_none': 'Geri yüklenecek aktif bir abonelik bulunamadı.',
+      'rc_restore_fail': 'Geri yükleme işlemi başarısız oldu.',
+      'battery_dialog_title': 'Bildirim İzni Gerekli',
+      'battery_dialog_content': 'Alarmların çalabilmesi için bildirim iznine ihtiyaç var.\n\nLütfen Ayarlar\'dan bildirimlere izin verin.',
+      'battery_dialog_now_not': 'Şimdi Değil',
+      'battery_dialog_open_settings': 'Ayarları Aç',
+      'battery_snack_bar': 'Ayarlar > Bildirimler > Alarmly yolunu izleyin ve bildirimleri açın.',
+      'settings_no_custom_q': 'Henüz özel soru yok.',
     },
     'en': {
       'app_title': 'Alarmly - Wake Force Alarm',
@@ -190,8 +246,64 @@ class AppLocalizations {
       'alarm_saved_warning': 'Alarm saved! Please keep the app in the background. Alarmly is battery-friendly and consumes no power.',
       'kill_warning_title': '⚠️ WARNING: Alarm May Not Ring!',
       'kill_warning_body': 'You have fully closed the app! Apple prevents background alarms from ringing if the app is killed. Please leave it in the background.',
-      'ringing_notification_title': 'Hard Alarm - Wake Up!',
+      'ringing_notification_title': 'Alarmly - Wake Force Alarm',
       'ringing_notification_body': 'Your day is starting, time to wake up!',
+
+      // Custom Sounds
+      'custom_sound_title': 'Custom Alarm Sounds',
+      'custom_sound_subtitle': 'Upload your own music and audio files',
+      'custom_sound_empty': 'You haven\'t uploaded any custom sounds yet.',
+      'custom_sound_add': 'Upload New Sound',
+      'custom_sound_close': 'Close',
+
+      // Stop Methods
+      'method_math': 'Math',
+      'method_shake': 'Shake',
+      'method_typing': 'Typing',
+      'method_memory': 'Memory',
+      'method_qr': 'QR / Barcode',
+
+      // Melody
+      'melody_custom': 'Custom',
+      'melody_hard': 'Hard',
+      'melody_soft': 'Soft',
+      'melody_modern': 'Modern',
+
+      // Lock & Rewards
+      'premium_lock_title': 'Pro Feature',
+      'premium_lock_desc': 'Different alarm stop methods are exclusive to Alarmly Pro users.',
+      'premium_lock_btn': 'Upgrade to Pro (Settings)',
+      'reward_try_once': 'Unlock Once  🎬',
+      'reward_try_once_desc': '— Watch ad to unlock all methods',
+      'reward_unlocked_toast': 'All stop methods unlocked for this alarm! 🎉',
+      'reward_failed_toast': 'Failed to load ad, please try again.',
+
+      // Stop Views
+      'typing_title': 'Type Exactly the Same!',
+      'typing_hint_2': 'Pay attention to capitalization and punctuation.',
+      'typing_textfield_hint': 'Type here...',
+      'shake_title': 'Shake to Snooze!',
+      'memory_title': 'Memory Game',
+      'memory_subtitle': 'Match the Cards',
+      'memory_match': 'Matches: ',
+      'qr_title': 'Scan Any Barcode',
+      'qr_subtitle': 'Go to the kitchen and scan a product barcode\nor a random QR code.',
+      'math_zero_error': 'Sıfıra bölünemez! / Cannot divide by zero',
+      'math_remainder_error': 'Indivisible! Please enter numbers that divide evenly. (e.g. 10 / 2)',
+
+      // RevenueCat & System
+      'rc_success': 'Premium activated! 🎉',
+      'rc_fail': 'Purchase failed. Please try again.',
+      'rc_error': 'An error occurred: ',
+      'rc_restore_success': 'Purchases restored successfully! 🎉',
+      'rc_restore_none': 'No active subscription found to restore.',
+      'rc_restore_fail': 'Restore failed.',
+      'battery_dialog_title': 'Notification Permission Required',
+      'battery_dialog_content': 'Notification permission is required for alarms to ring.\n\nPlease allow notifications in Settings.',
+      'battery_dialog_now_not': 'Not Now',
+      'battery_dialog_open_settings': 'Open Settings',
+      'battery_snack_bar': 'Go to Settings > Notifications > Alarmly and turn on notifications.',
+      'settings_no_custom_q': 'No custom questions yet.',
     },
   };
 

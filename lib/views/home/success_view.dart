@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 
 class SuccessView extends ConsumerStatefulWidget {
   const SuccessView({super.key});
@@ -77,7 +78,14 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
     );
 
     _controller.forward();
-    _loadInterstitialAd();
+    
+    // Premium kontrolü: Sadece premium değilse reklam yükle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final isPremium = ref.read(isPremiumProvider);
+      if (!isPremium) {
+        _loadInterstitialAd();
+      }
+    });
   }
 
   void _loadInterstitialAd() {
@@ -98,7 +106,9 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
   }
 
   void _showInterstitialAdAndReturn() {
-    if (_interstitialAd == null) {
+    final isPremium = ref.read(isPremiumProvider);
+    
+    if (isPremium || _interstitialAd == null) {
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }

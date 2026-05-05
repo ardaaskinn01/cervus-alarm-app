@@ -13,6 +13,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
+
   const SettingsView({super.key});
 
   @override
@@ -78,61 +79,179 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
 
   void _showPremiumDialog() {
     final locale = ref.read(localeProvider);
+    final isTr = locale == 'tr';
+    
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: AppTheme.cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.star_rounded, size: 64, color: Colors.amber),
-              const SizedBox(height: 16),
-              Text(
-                AppLocalizations.get('premium_popup_title', locale),
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              _buildPremiumFeatureRow(Icons.music_note, AppLocalizations.get('premium_popup_feature_1', locale)),
-              _buildPremiumFeatureRow(Icons.extension, AppLocalizations.get('premium_popup_feature_2', locale)),
-              _buildPremiumFeatureRow(Icons.block, AppLocalizations.get('premium_popup_feature_3', locale)),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.star_rounded, size: 60, color: Colors.amber),
+                const SizedBox(height: 12),
+                Text(
+                  AppLocalizations.get('premium_popup_title', locale),
+                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                _buildPremiumFeatureRow(Icons.music_note, AppLocalizations.get('premium_popup_feature_1', locale)),
+                _buildPremiumFeatureRow(Icons.extension, AppLocalizations.get('premium_popup_feature_2', locale)),
+                _buildPremiumFeatureRow(Icons.block, AppLocalizations.get('premium_popup_feature_3', locale)),
+                const SizedBox(height: 24),
+                
+                FutureBuilder<Offerings?>(
+                  future: RevenueCatService.getOfferings(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(child: CircularProgressIndicator(color: Colors.amber)),
+                      );
+                    }
+                    
+                    final offerings = snapshot.data;
+                    final packages = offerings?.current?.availablePackages ?? [];
+                    
+                    if (packages.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(isTr ? "Şu an satın alınabilecek paket bulunamadı." : "No packages available to purchase.", style: const TextStyle(color: Colors.white70)),
+                      );
+                    }
+                    
+                    final monthly = packages.where((p) => p.packageType == PackageType.monthly).firstOrNull ?? packages.where((p) => p.identifier.contains('monthly')).firstOrNull;
+                    final yearly = packages.where((p) => p.packageType == PackageType.annual).firstOrNull ?? packages.where((p) => p.identifier.contains('yearly')).firstOrNull;
+                    final lifetime = packages.where((p) => p.packageType == PackageType.lifetime).firstOrNull ?? packages.where((p) => p.identifier.contains('lifetime') || p.identifier.contains('pro')).firstOrNull;
+
+                    return Column(
+                      children: [
+                        if (monthly != null)
+                          _buildSubscriptionCard(
+                            ctx,
+                            package: monthly,
+                            title: isTr ? "Aylık" : "Monthly",
+                            price: isTr ? "49.99 ₺" : "\$2.99",
+                            originalPrice: null,
+                            subtitle: isTr ? "Denemek için ideal" : "Ideal for testing",
+                          ),
+                        if (yearly != null)
+                          _buildSubscriptionCard(
+                            ctx,
+                            package: yearly,
+                            title: isTr ? "Yıllık" : "Yearly",
+                            price: isTr ? "299.99 ₺" : "\$17.99",
+                            originalPrice: isTr ? "599.99 ₺" : "\$35.99",
+                            subtitle: isTr ? "En popüler" : "Most popular",
+                            isPopular: true,
+                            isTr: isTr,
+                          ),
+                        if (lifetime != null)
+                          _buildSubscriptionCard(
+                            ctx,
+                            package: lifetime,
+                            title: isTr ? "Ömür Boyu" : "Lifetime",
+                            price: isTr ? "599.00 ₺" : "\$35.99",
+                            originalPrice: null,
+                            subtitle: isTr ? "Özel teklif, tek seferlik" : "Special offer, one-time",
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: 8),
+                TextButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    await RevenueCatService.purchasePremium(ref, context);
+                    await RevenueCatService.restorePurchases(ref, context);
                   },
-                  child: Text(
-                    AppLocalizations.get('premium_popup_buy', locale),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  child: Text(AppLocalizations.get('premium_popup_restore', locale), style: const TextStyle(color: Colors.white70)),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await RevenueCatService.restorePurchases(ref);
-                },
-                child: Text(AppLocalizations.get('premium_popup_restore', locale), style: const TextStyle(color: Colors.white70)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(AppLocalizations.get('premium_popup_cancel', locale), style: const TextStyle(color: Colors.white54)),
-              )
-            ],
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(AppLocalizations.get('premium_popup_cancel', locale), style: const TextStyle(color: Colors.white54)),
+                )
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCard(
+    BuildContext dialogContext, {
+    required Package package,
+    required String title,
+    required String price,
+    String? originalPrice,
+    required String subtitle,
+    bool isPopular = false,
+    bool isTr = false,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        Navigator.pop(dialogContext);
+        await RevenueCatService.purchasePackage(ref, context, package);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isPopular ? Colors.amber.withOpacity(0.15) : Colors.white.withOpacity(0.05),
+          border: Border.all(color: isPopular ? Colors.amber : Colors.white.withOpacity(0.1)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      if (isPopular) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(6)),
+                          child: Text(isTr ? "POPÜLER" : "POPULAR", style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold)),
+                        ),
+                      ]
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (originalPrice != null)
+                  Text(
+                    originalPrice,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                Text(
+                  price,
+                  style: const TextStyle(color: Colors.amber, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -225,11 +344,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
 
                     if (selectedOperator == '/') {
                       if (n2 == 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sıfıra bölünemez! / Cannot divide by zero'), backgroundColor: Colors.red));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.get('math_zero_error', ref.read(localeProvider))), backgroundColor: Colors.red));
                         return;
                       }
                       if (n1 % n2 != 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Tam bölünmüyor! Lütfen kalansız bölünecek sayılar girin. (Örn: 10 / 2)'), backgroundColor: Colors.red));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.get('math_remainder_error', ref.read(localeProvider))), backgroundColor: Colors.red));
                         return;
                       }
                     }
@@ -272,18 +391,19 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final locale = ref.read(localeProvider);
             return AlertDialog(
               backgroundColor: AppTheme.cardColor,
-              title: const Text('Özel Alarm Sesleri', style: TextStyle(color: Colors.white)),
+              title: Text(AppLocalizations.get('custom_sound_title', locale), style: const TextStyle(color: Colors.white)),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_customSounds.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text("Henüz özel bir ses yüklemediniz.", style: TextStyle(color: Colors.white54)),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(AppLocalizations.get('custom_sound_empty', locale), style: const TextStyle(color: Colors.white54)),
                       )
                     else
                       Flexible(
@@ -316,10 +436,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.add),
-                      label: const Text('Yeni Ses Yükle'),
+                      label: Text(AppLocalizations.get('custom_sound_add', locale)),
                       onPressed: () async {
                         try {
-                          FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio);
+                          // iOS'ta kitlenme hissini önlemek için çoklu tıklamayı engelleyebiliriz
+                          // ve sıkıştırmayı kapatabiliriz (hız kazandırır)
+                          FilePickerResult? result = await FilePicker.platform.pickFiles(
+                            type: FileType.audio,
+                            allowCompression: false, // iOS'ta işlemi hızlandırır
+                          );
+                          
                           if (result != null && result.files.single.path != null) {
                             File file = File(result.files.single.path!);
                             String name = result.files.single.name;
@@ -343,7 +469,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Kapat', style: TextStyle(color: Colors.white54)),
+                  child: Text(AppLocalizations.get('custom_sound_close', locale), style: const TextStyle(color: Colors.white54)),
                 )
               ],
             );
@@ -405,8 +531,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                 ),
               _buildSettingTile(
                 icon: Icons.queue_music_rounded,
-                title: 'Özel Alarm Sesleri', //TODO localize
-                subtitle: 'Kendi müzik ve ses dosyalarını yükle',
+                title: AppLocalizations.get('custom_sound_title', locale),
+                subtitle: AppLocalizations.get('custom_sound_subtitle', locale),
                 iconColor: AppTheme.primaryColor,
                 onTap: _showCustomSoundDialog,
                 trailing: !isPremium ? const Icon(Icons.lock, color: Colors.amber, size: 20) : null,
@@ -467,9 +593,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                               Text(AppLocalizations.get('settings_custom_q_title', locale), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
                               if (_customQuestions.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Text("Henüz özel soru yok / No custom questions", style: TextStyle(color: Colors.white54)),
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(AppLocalizations.get('settings_no_custom_q', locale), style: const TextStyle(color: Colors.white54)),
                                 )
                               else
                                 ListView.builder(

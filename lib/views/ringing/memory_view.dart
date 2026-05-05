@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
-
 import 'dart:math';
 
 class MemoryView extends ConsumerStatefulWidget {
@@ -106,112 +106,115 @@ class _MemoryViewState extends ConsumerState<MemoryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Hafıza Oyunu', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.backgroundColor,
-              AppTheme.gradientEndColor,
-              AppTheme.backgroundColor,
-            ],
-            stops: [0.0, 0.7, 1.0],
-          ),
+    final locale = ref.watch(localeProvider);
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(AppLocalizations.get('memory_title', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: true,
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'Kartları Eşleştir',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.backgroundColor,
+                AppTheme.gradientEndColor,
+                AppTheme.backgroundColor,
+              ],
+              stops: [0.0, 0.7, 1.0],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Text(
+                    AppLocalizations.get('memory_subtitle', locale),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Eşleşen: $_matchCount / ${_emojis.length}',
-                style: const TextStyle(
-                  color: Colors.amber,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.8,
+                const SizedBox(height: 8),
+                Text(
+                  '${AppLocalizations.get('memory_match', locale)}$_matchCount / ${_emojis.length}',
+                  style: const TextStyle(
+                    color: Colors.amber,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  itemCount: 12,
-                  itemBuilder: (context, index) {
-                    final isFlipped = _cardFlips[index] || _cardMatches[index];
-                    return GestureDetector(
-                      onTap: () => _onCardTap(index),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        decoration: BoxDecoration(
-                          color: isFlipped 
-                              ? (_cardMatches[index] ? Colors.green.withOpacity(0.3) : Colors.white)
-                              : AppTheme.primaryColor.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isFlipped ? Colors.white24 : Colors.white12,
-                            width: 2,
+                ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: 12,
+                    itemBuilder: (context, index) {
+                      final isFlipped = _cardFlips[index] || _cardMatches[index];
+                      return GestureDetector(
+                        onTap: () => _onCardTap(index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          decoration: BoxDecoration(
+                            color: isFlipped 
+                                ? (_cardMatches[index] ? Colors.green.withOpacity(0.3) : Colors.white)
+                                : AppTheme.primaryColor.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isFlipped ? Colors.white24 : Colors.white12,
+                              width: 2,
+                            ),
+                            boxShadow: isFlipped
+                                ? []
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
                           ),
-                          boxShadow: isFlipped
-                              ? []
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
+                          child: Center(
+                            child: isFlipped
+                                ? Text(
+                                    _cards[index],
+                                    style: const TextStyle(fontSize: 40),
                                   )
-                                ],
+                                : const Icon(
+                                    Icons.question_mark_rounded,
+                                    color: Colors.white54,
+                                    size: 32,
+                                  ),
+                          ),
                         ),
-                        child: Center(
-                          child: isFlipped
-                              ? Text(
-                                  _cards[index],
-                                  style: const TextStyle(fontSize: 40),
-                                )
-                              : const Icon(
-                                  Icons.question_mark_rounded,
-                                  color: Colors.white54,
-                                  size: 32,
-                                ),
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const Spacer(),
-
-            ],
+                const Spacer(),
+              ],
+            ),
           ),
         ),
       ),

@@ -31,6 +31,11 @@ class AlarmModel extends HiveObject {
   @HiveField(8, defaultValue: 'math')
   String stopMethod;
 
+  /// Ödüllü reklam izlenerek kapatma yöntemleri geçici olarak açıldı mı?
+  /// Alarm çaldıktan sonra false'a döner.
+  @HiveField(9, defaultValue: false)
+  bool rewardUnlocked;
+
   AlarmModel({
     required this.id,
     required this.hour,
@@ -41,6 +46,7 @@ class AlarmModel extends HiveObject {
     this.vibrate = true,
     this.label = '',
     this.stopMethod = 'math',
+    this.rewardUnlocked = false,
   });
 
   // To JSON
@@ -55,6 +61,7 @@ class AlarmModel extends HiveObject {
       'vibrate': vibrate,
       'label': label,
       'stopMethod': stopMethod,
+      'rewardUnlocked': rewardUnlocked,
     };
   }
 
@@ -70,6 +77,7 @@ class AlarmModel extends HiveObject {
       vibrate: json['vibrate'] ?? true,
       label: json['label'] ?? '',
       stopMethod: json['stopMethod'] ?? 'math',
+      rewardUnlocked: json['rewardUnlocked'] ?? false,
     );
   }
 
@@ -83,6 +91,7 @@ class AlarmModel extends HiveObject {
     bool? vibrate,
     String? label,
     String? stopMethod,
+    bool? rewardUnlocked,
   }) {
     return AlarmModel(
       id: id ?? this.id,
@@ -94,6 +103,8 @@ class AlarmModel extends HiveObject {
       vibrate: vibrate ?? this.vibrate,
       label: label ?? this.label,
       stopMethod: stopMethod ?? this.stopMethod,
+      rewardUnlocked: rewardUnlocked ?? this.rewardUnlocked,
     );
   }
 }
+

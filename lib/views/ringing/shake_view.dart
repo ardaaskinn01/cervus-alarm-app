@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
-
 import 'dart:math';
 
 class ShakeView extends ConsumerStatefulWidget {
@@ -107,78 +107,81 @@ class _ShakeViewState extends ConsumerState<ShakeView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Ertelemek için Salla!', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.backgroundColor,
-              AppTheme.gradientEndColor,
-              AppTheme.backgroundColor,
-            ],
-            stops: [0.0, 0.7, 1.0],
-          ),
+    final locale = ref.watch(localeProvider);
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(AppLocalizations.get('shake_title', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: true,
         ),
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              const Icon(Icons.vibration_rounded, size: 100, color: Colors.white),
-              const SizedBox(height: 48),
-              
-              // Progress Indicator
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 200,
-                    height: 200,
-                    child: CircularProgressIndicator(
-                      value: shakeCount / targetShakes,
-                      strokeWidth: 16,
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        shakeCount > (targetShakes * 0.7) 
-                            ? AppTheme.primaryColor 
-                            : AppTheme.secondaryColor
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.backgroundColor,
+                AppTheme.gradientEndColor,
+                AppTheme.backgroundColor,
+              ],
+              stops: [0.0, 0.7, 1.0],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                const Icon(Icons.vibration_rounded, size: 100, color: Colors.white),
+                const SizedBox(height: 48),
+                
+                // Progress Indicator
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: CircularProgressIndicator(
+                        value: shakeCount / targetShakes,
+                        strokeWidth: 16,
+                        backgroundColor: Colors.white.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          shakeCount > (targetShakes * 0.7) 
+                              ? AppTheme.primaryColor 
+                              : AppTheme.secondaryColor
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    '$shakeCount',
-                    style: const TextStyle(
-                      fontSize: 64,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                    Text(
+                      '$shakeCount',
+                      style: const TextStyle(
+                        fontSize: 64,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Hedef: $targetShakes sallama',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  ],
                 ),
-              ),
-              const Spacer(),
-
-            ],
+                const SizedBox(height: 24),
+                Text(
+                  'Hedef: $targetShakes sallama',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+              ],
+            ),
           ),
         ),
       ),

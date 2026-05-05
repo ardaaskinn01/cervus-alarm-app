@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
@@ -57,100 +58,104 @@ class _BarcodeScannerViewState extends ConsumerState<BarcodeScannerView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Herhangi Bir Barkod Okut', style: TextStyle(fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: cameraController,
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                // Herhangi bir barkod bulduğunda hemen kapat!
-                _finishTask();
-              }
-            },
-          ),
-          // Gradient Frame Overlay
-          Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.8),
-                ],
-                radius: 0.8,
-              ),
+    final locale = ref.watch(localeProvider);
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(AppLocalizations.get('qr_title', locale), style: const TextStyle(fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black54, blurRadius: 4)])),
+          centerTitle: true,
+        ),
+        body: Stack(
+          children: [
+            MobileScanner(
+              controller: cameraController,
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty) {
+                  // Herhangi bir barkod bulduğunda hemen kapat!
+                  _finishTask();
+                }
+              },
             ),
-          ),
-          Center(
-            child: Container(
-              width: 250,
-              height: 250,
+            // Gradient Frame Overlay
+            Container(
               decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.primaryColor, width: 4),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 0, left: 0,
-                    child: Container(width: 30, height: 4, color: Colors.white),
-                  ),
-                  Positioned(
-                    top: 0, left: 0,
-                    child: Container(width: 4, height: 30, color: Colors.white),
-                  ),
-                  Positioned(
-                    top: 0, right: 0,
-                    child: Container(width: 30, height: 4, color: Colors.white),
-                  ),
-                  Positioned(
-                    top: 0, right: 0,
-                    child: Container(width: 4, height: 30, color: Colors.white),
-                  ),
-                  Positioned(
-                    bottom: 0, left: 0,
-                    child: Container(width: 30, height: 4, color: Colors.white),
-                  ),
-                  Positioned(
-                    bottom: 0, left: 0,
-                    child: Container(width: 4, height: 30, color: Colors.white),
-                  ),
-                  Positioned(
-                    bottom: 0, right: 0,
-                    child: Container(width: 30, height: 4, color: Colors.white),
-                  ),
-                  Positioned(
-                    bottom: 0, right: 0,
-                    child: Container(width: 4, height: 30, color: Colors.white),
-                  ),
-                ],
+                gradient: RadialGradient(
+                  center: Alignment.center,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.8),
+                  ],
+                  radius: 0.8,
+                ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: 120,
-            left: 0,
-            right: 0,
-            child: const Text(
-              "Mutfağa gidip bir ürün barkodu\nveya rastgele bir QR kod okutun.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            Center(
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppTheme.primaryColor, width: 4),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0, left: 0,
+                      child: Container(width: 30, height: 4, color: Colors.white),
+                    ),
+                    Positioned(
+                      top: 0, left: 0,
+                      child: Container(width: 4, height: 30, color: Colors.white),
+                    ),
+                    Positioned(
+                      top: 0, right: 0,
+                      child: Container(width: 30, height: 4, color: Colors.white),
+                    ),
+                    Positioned(
+                      top: 0, right: 0,
+                      child: Container(width: 4, height: 30, color: Colors.white),
+                    ),
+                    Positioned(
+                      bottom: 0, left: 0,
+                      child: Container(width: 30, height: 4, color: Colors.white),
+                    ),
+                    Positioned(
+                      bottom: 0, left: 0,
+                      child: Container(width: 4, height: 30, color: Colors.white),
+                    ),
+                    Positioned(
+                      bottom: 0, right: 0,
+                      child: Container(width: 30, height: 4, color: Colors.white),
+                    ),
+                    Positioned(
+                      bottom: 0, right: 0,
+                      child: Container(width: 4, height: 30, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-
-        ],
+            Positioned(
+              bottom: 120,
+              left: 0,
+              right: 0,
+              child: Text(
+                AppLocalizations.get('qr_subtitle', locale),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+

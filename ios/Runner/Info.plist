@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.1.6</string>
+	<string>2.1.7</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>67</string>
+	<string>68</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -62,6 +62,8 @@
 	<string>Barkod ve QR kod okutarak alarmınızı kapatabilmeniz için kameraya erişilmesi gerekmektedir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Özel alarm sesi olarak kullanmak istediğiniz ses dosyasını seçebilmeniz için medya kütüphanesine erişilmesi gerekmektedir.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Özel alarm sesi seçebilmeniz için müzik kütüphanenize erişilmektedir.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

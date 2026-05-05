@@ -123,6 +123,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<void> _initializeApp() async {
     final startTime = DateTime.now();
+    final locale = ref.read(localStorageServiceProvider).getLanguage();
     await Future.delayed(const Duration(milliseconds: 300));
 
     try {
@@ -171,26 +172,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             backgroundColor: const Color(0xFF1E293B),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.notifications_off_rounded, color: Color(0xFFF59E0B)),
-                SizedBox(width: 10),
+                const Icon(Icons.notifications_off_rounded, color: Color(0xFFF59E0B)),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Bildirim İzni Gerekli',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    AppLocalizations.get('battery_dialog_title', locale),
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
-            content: const Text(
-              'Alarmların çalabilmesi için bildirim iznine ihtiyaç var.\n\nLütfen Ayarlar\'dan bildirimlere izin verin.',
-              style: TextStyle(color: Colors.white70, height: 1.5),
+            content: Text(
+              AppLocalizations.get('battery_dialog_content', locale),
+              style: const TextStyle(color: Colors.white70, height: 1.5),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Şimdi Değil', style: TextStyle(color: Colors.white38)),
+                child: Text(AppLocalizations.get('battery_dialog_now_not', locale), style: const TextStyle(color: Colors.white38)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -203,18 +204,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   // Kullanıcıya ayarlara nasıl gideceğini göster
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                          'Ayarlar > Bildirimler > Alarmly yolunu izleyin ve bildirimleri açın.',
-                          style: TextStyle(fontSize: 13),
+                          AppLocalizations.get('battery_snack_bar', locale),
+                          style: const TextStyle(fontSize: 13),
                         ),
-                        backgroundColor: Color(0xFF1E3A8A),
-                        duration: Duration(seconds: 6),
+                        backgroundColor: const Color(0xFF1E3A8A),
+                        duration: const Duration(seconds: 6),
                       ),
                     );
                   }
                 },
-                child: const Text('Ayarları Aç', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(AppLocalizations.get('battery_dialog_open_settings', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
