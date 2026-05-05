@@ -157,7 +157,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                             ctx,
                             package: lifetime,
                             title: isTr ? "Ömür Boyu" : "Lifetime",
-                            price: isTr ? "599.00 ₺" : "\$35.99",
+                            price: isTr ? "599.99 ₺" : "\$35.99",
                             originalPrice: null,
                             subtitle: isTr ? "Özel teklif, tek seferlik" : "Special offer, one-time",
                           ),

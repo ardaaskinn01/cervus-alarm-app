@@ -16,6 +16,7 @@ import 'core/app_localizations.dart';
 import 'views/onboarding/initial_setup_view.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'services/revenuecat_service.dart';
+import 'services/dashboard_service.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -227,6 +228,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       
       // REVENUE CAT BAŞLAT
       await RevenueCatService.init(ref);
+
+      // 4.1 DASHBOARD TELEMETRY (Non-blocking)
+      DashboardService().logVisit();
       
       if (Platform.isIOS) {
         // iOS için ATT İzni Talebi
