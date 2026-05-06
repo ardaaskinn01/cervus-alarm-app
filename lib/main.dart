@@ -17,6 +17,8 @@ import 'views/onboarding/initial_setup_view.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'services/revenuecat_service.dart';
 import 'services/dashboard_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
