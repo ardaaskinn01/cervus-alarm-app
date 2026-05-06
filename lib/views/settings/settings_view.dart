@@ -115,10 +115,22 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                         child: Center(child: CircularProgressIndicator(color: Colors.amber)),
                       );
                     }
-                    
+
+                    // Hata veya veri yoksa kullanıcı dostu mesaj göster — asla crash yok
+                    if (snapshot.hasError || snapshot.data == null) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          isTr ? "Paketler yüklenemedi. İnternet bağlantınızı kontrol edin." : "Packages could not be loaded. Please check your internet connection.",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white54),
+                        ),
+                      );
+                    }
+
                     final offerings = snapshot.data;
                     final packages = offerings?.current?.availablePackages ?? [];
-                    
+
                     if (packages.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.all(16),
@@ -137,18 +149,17 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                             ctx,
                             package: monthly,
                             title: isTr ? "Aylık" : "Monthly",
-                            price: isTr ? "49.99 ₺" : "\$2.99",
-                            originalPrice: null,
-                            subtitle: isTr ? "Denemek için ideal" : "Ideal for testing",
+                            price: monthly.storeProduct.priceString,
+                            subtitle: isTr ? "Her ay yenilenir" : "Renews every month",
                           ),
                         if (yearly != null)
                           _buildSubscriptionCard(
                             ctx,
                             package: yearly,
                             title: isTr ? "Yıllık" : "Yearly",
-                            price: isTr ? "299.99 ₺" : "\$17.99",
-                            originalPrice: isTr ? "599.99 ₺" : "\$35.99",
-                            subtitle: isTr ? "En popüler" : "Most popular",
+                            price: yearly.storeProduct.priceString,
+                            originalPrice: isTr ? "999.00 ₺" : "\$59.99",
+                            subtitle: isTr ? "En maliyet etkin seçim" : "Best value for money",
                             isPopular: true,
                             isTr: isTr,
                           ),
@@ -157,13 +168,36 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                             ctx,
                             package: lifetime,
                             title: isTr ? "Ömür Boyu" : "Lifetime",
-                            price: isTr ? "599.99 ₺" : "\$35.99",
-                            originalPrice: null,
-                            subtitle: isTr ? "Özel teklif, tek seferlik" : "Special offer, one-time",
+                            price: lifetime.storeProduct.priceString,
+                            subtitle: isTr ? "Tek seferlik ödeme" : "One-time payment",
                           ),
                       ],
                     );
                   },
+                ),
+                
+                const SizedBox(height: 12),
+                // Apple-Required Legal Links
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => launchUrl(Uri.parse("https://cervusdigital.com/alarmly/privacy-policy/")),
+                      child: Text(isTr ? "Gizlilik" : "Privacy Policy", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    ),
+                    const Text("|", style: TextStyle(color: Colors.white38)),
+                    TextButton(
+                      onPressed: () => launchUrl(Uri.parse("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")),
+                      child: Text(isTr ? "Kullanım Koşulları" : "Terms of Use (EULA)", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    ),
+                  ],
+                ),
+                Text(
+                  isTr 
+                    ? "Abonelikler otomatik olarak yenilenir. İptal edilmediği sürece seçilen dönem sonunda ücret indirilir."
+                    : "Subscriptions renew automatically. Payment will be charged at the end of the period unless cancelled.",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white24, fontSize: 10),
                 ),
                 
                 const SizedBox(height: 8),

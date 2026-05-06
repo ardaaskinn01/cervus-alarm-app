@@ -79,10 +79,10 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
 
     _controller.forward();
     
-    // Premium kontrolü: Sadece premium değilse reklam yükle
+    // Premium kontrolü: Sadece premium değilse VE soğuma süresi geçmişse reklam yükle
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isPremium = ref.read(isPremiumProvider);
-      if (!isPremium) {
+      if (!isPremium && AdHelper.canShowInterstitial) {
         _loadInterstitialAd();
       }
     });
@@ -108,7 +108,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
   void _showInterstitialAdAndReturn() {
     final isPremium = ref.read(isPremiumProvider);
     
-    if (isPremium || _interstitialAd == null) {
+    if (isPremium || _interstitialAd == null || !AdHelper.canShowInterstitial) {
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -117,6 +117,7 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
 
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
+        AdHelper.recordAdShown(); // Reklam geçmişini kaydet
         ad.dispose();
         if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       },

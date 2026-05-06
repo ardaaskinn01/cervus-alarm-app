@@ -7,27 +7,37 @@ import '../core/app_localizations.dart';
 export 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
-
 final isPremiumProvider = StateProvider<bool>((ref) => false);
 
 class RevenueCatService {
+  static bool _isConfigured = false;
+
   static Future<void> init(WidgetRef ref) async {
-    await Purchases.setLogLevel(LogLevel.debug);
+    try {
+      await Purchases.setLogLevel(LogLevel.debug);
 
-    PurchasesConfiguration configuration;
-    if (Platform.isAndroid) {
-      configuration = PurchasesConfiguration("goog_CdKPYBXhbZiLNyviaUoCHkeooJx"); 
-    } else {
-      configuration = PurchasesConfiguration("appl_zMfQsclGkpPBQeXPmcfJbTIpWch");
+      PurchasesConfiguration configuration;
+      if (Platform.isAndroid) {
+        configuration = PurchasesConfiguration("goog_CdKPYBXhbZiLNyviaUoCHkeooJx");
+      } else {
+        configuration = PurchasesConfiguration("appl_zMfQsclGkpPBQeXPmcfJbTIpWch");
+      }
+      await Purchases.configure(configuration);
+      _isConfigured = true;
+
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+      final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
+      ref.read(isPremiumProvider.notifier).state = isPro;
+    } catch (e) {
+      debugPrint("RevenueCat Init Error: $e");
     }
-    await Purchases.configure(configuration);
-
-    CustomerInfo customerInfo = await Purchases.getCustomerInfo();
-    final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
-    ref.read(isPremiumProvider.notifier).state = isPro;
   }
 
   static Future<Offerings?> getOfferings() async {
+    if (!_isConfigured) {
+      debugPrint("RevenueCat is not configured yet — skipping getOfferings.");
+      return null;
+    }
     try {
       return await Purchases.getOfferings();
     } catch (e) {
@@ -42,7 +52,7 @@ class RevenueCatService {
       final customerInfo = purchaseResult.customerInfo;
       final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
       ref.read(isPremiumProvider.notifier).state = isPro;
-      
+
       if (isPro) {
         if (context.mounted) {
           final locale = ref.read(localeProvider);
@@ -76,13 +86,13 @@ class RevenueCatService {
     }
     return false;
   }
-  
+
   static Future<bool> restorePurchases(WidgetRef ref, BuildContext context) async {
     try {
       CustomerInfo customerInfo = await Purchases.restorePurchases();
       final isPro = customerInfo.entitlements.all["pro"]?.isActive ?? false;
       ref.read(isPremiumProvider.notifier).state = isPro;
-      
+
       if (context.mounted) {
         final locale = ref.read(localeProvider);
         if (isPro) {

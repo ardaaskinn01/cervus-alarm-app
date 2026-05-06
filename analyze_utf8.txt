@@ -1,0 +1,105 @@
+﻿Analyzing Alarm...                                              
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\app_theme.dart:18:26 - deprecated_member_use
+warning - The declaration '_AddAlarmBottomSheetState' isn't referenced - lib\main.dart:58:7 - unused_element
+warning - A value of type 'void' can't be returned by the 'onError' handler because it must be assignable to 'FutureOr<FirebaseApp>' - lib\main.dart:229:56 - invalid_return_type_for_catch_error
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\main.dart:401:37 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\services\dashboard_service.dart:174:47 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\services\dashboard_service.dart:175:53 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\services\dashboard_service.dart:176:52 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\services\dashboard_service.dart:177:53 - curly_braces_in_flow_control_structures
+   info - The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\services\revenuecat_service.dart:2:8 - unnecessary_import
+   info - 'purchasePackage' is deprecated and shouldn't be used. Use purchase(PurchaseParams) - lib\services\revenuecat_service.dart:51:46 - deprecated_member_use
+warning - Unused import: 'dart:io' - lib\views\components\banner_ad_widget.dart:6:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\views\home\add_alarm_bottom_sheet.dart:19:9 - use_super_parameters
+   info - Unnecessary empty statement - lib\views\home\add_alarm_bottom_sheet.dart:43:23 - empty_statements
+   info - Unnecessary use of 'toList' in a spread - lib\views\home\add_alarm_bottom_sheet.dart:348:26 - unnecessary_to_list_in_spreads
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\add_alarm_bottom_sheet.dart:405:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\add_alarm_bottom_sheet.dart:407:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\add_alarm_bottom_sheet.dart:423:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\add_alarm_bottom_sheet.dart:520:41 - deprecated_member_use
+warning - The declaration '_showPremiumLock' isn't referenced - lib\views\home\add_alarm_bottom_sheet.dart:530:8 - unused_element
+   info - Unnecessary 'const' keyword - lib\views\home\home_view.dart:57:20 - unnecessary_const
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:69:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:72:68 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:76:71 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:116:53 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\views\home\home_view.dart:179:11 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:199:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:200:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:204:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\home_view.dart:242:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:188:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:192:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:226:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:240:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:242:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:254:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\home\success_view.dart:293:56 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\views\onboarding\initial_setup_view.dart:54:23 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\onboarding\initial_setup_view.dart:63:31 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\views\onboarding\initial_setup_view.dart:128:29 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\barcode_scanner_view.dart:93:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\memory_view.dart:145:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\memory_view.dart:181:71 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\memory_view.dart:182:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\memory_view.dart:192:59 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\views\ringing\puzzle_view.dart:16:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:176:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:179:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:191:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:193:79 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:196:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:211:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:227:74 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:236:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:251:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:265:72 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:267:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:271:76 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\puzzle_view.dart:296:66 - deprecated_member_use
+warning - Unused import: '../../services/alarm_service.dart' - lib\views\ringing\ringing_view.dart:6:8 - unused_import
+warning - Unused import: '../home/success_view.dart' - lib\views\ringing\ringing_view.dart:12:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\ringing_view.dart:123:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\ringing_view.dart:126:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\ringing_view.dart:131:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\ringing_view.dart:169:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\ringing_view.dart:190:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\ringing_view.dart:219:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\shake_view.dart:155:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\shake_view.dart:177:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\typing_view.dart:148:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\typing_view.dart:188:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\typing_view.dart:190:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\ringing\typing_view.dart:201:68 - deprecated_member_use
+  error - Expected an identifier - lib\views\settings\settings_view.dart:161:66 - missing_identifier
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:242:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:242:76 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:243:77 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:266:71 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\views\settings\settings_view.dart:404:48 - use_build_context_synchronously
+   info - Unnecessary 'const' keyword - lib\views\settings\settings_view.dart:541:20 - unnecessary_const
+   info - Use interpolation to compose strings and values - lib\views\settings\settings_view.dart:613:27 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:734:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:736:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:739:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:759:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:763:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:789:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\views\settings\settings_view.dart:795:113 - deprecated_member_use
+
+flutter : 87 issues found. (r
+an in 19.1s)
+At line:1 char:1
++ flutter analyze > analyze.t
+xt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (87 issu  
+  es found. (ran in 19.1s)   
+ :String) [], RemoteExcep    
+tion
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 

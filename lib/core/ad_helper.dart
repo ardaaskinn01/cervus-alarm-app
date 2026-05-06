@@ -1,6 +1,18 @@
 import 'dart:io';
 
 class AdHelper {
+  static DateTime? _lastInterstitialTime;
+  static const Duration _adCooldown = Duration(seconds: 45);
+
+  static bool get canShowInterstitial {
+    if (_lastInterstitialTime == null) return true;
+    return DateTime.now().difference(_lastInterstitialTime!) > _adCooldown;
+  }
+
+  static void recordAdShown() {
+    _lastInterstitialTime = DateTime.now();
+  }
+
   static String get bannerAdUnitId {
     if (Platform.isAndroid) {
       return 'ca-app-pub-2073707860224174/2356130826'; // Real Android Banner Ad Unit ID
@@ -28,3 +40,4 @@ class AdHelper {
     throw UnsupportedError('Unsupported platform');
   }
 }
+
