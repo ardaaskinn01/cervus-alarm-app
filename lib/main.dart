@@ -268,6 +268,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
       }
 
+      // 6. VERSİYON KONTROLÜ (Non-blocking)
+      _checkForUpdate();
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => nextView),
@@ -284,6 +287,82 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         isAppReady.value = true;
       }
     }
+  }
+
+  Future<void> _checkForUpdate() async {
+    try {
+      final config = await DashboardService().getVersionConfig();
+      if (config == null) return;
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      final int currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
+      final int latestBuild = config['buildNumber'] as int? ?? currentBuild;
+
+      // Eğer mağazadaki build numarası cihazdakinden büyükse güncelleme vardır
+      if (latestBuild > currentBuild) {
+        if (!mounted) return;
+        
+        Future.delayed(const Duration(seconds: 3), () {
+          if (!mounted) return;
+          _showUpdateDialog(
+            config['androidUrl'] ?? "https://play.google.com/store/apps/details?id=com.cervus.alarmly",
+            config['iosUrl'] ?? "https://apps.apple.com/app/id6761625063",
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint("Versiyon kontrol hatası: $e");
+    }
+  }
+
+  void _showUpdateDialog(String androidUrl, String iosUrl) {
+    final locale = ref.read(localeProvider);
+    final isTr = locale == 'tr';
+
+    showDialog(
+      context: navigatorKey.currentContext!,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isTr ? "Güncelleme Mevcut" : "Update Available",
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isTr 
+            ? "Uygulamanın yeni bir sürümü mevcut. En iyi deneyim için lütfen güncelleyin." 
+            : "A new version of the app is available. Please update for the best experience.",
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              isTr ? "Şimdi Değil" : "Not Now",
+              style: const TextStyle(color: Colors.white38),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final url = Uri.parse(Platform.isAndroid ? androidUrl : iosUrl);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              isTr ? "Güncelle" : "Update",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
 

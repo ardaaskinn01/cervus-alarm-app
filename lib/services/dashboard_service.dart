@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +20,13 @@ class DashboardService with WidgetsBindingObserver {
   String? _deviceId;
   String? _currentVisitId;
   int _totalSecondsThisSession = 0;
+  Timer? _heartbeatTimer;
 
   Future<void> init() async {
     if (_isInitialized) return;
+
+    // Ana Firebase projesinin oturması için küçük bir gecikme ekliyoruz
+    await Future.delayed(const Duration(seconds: 2));
 
     try {
       // Manual Firebase initialization for the Dashboard project
@@ -63,9 +68,11 @@ class DashboardService with WidgetsBindingObserver {
     if (!_isInitialized) return;
 
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _stopHeartbeat();
       _updateCurrentSessionDuration();
     } else if (state == AppLifecycleState.resumed) {
       _sessionStartTime = DateTime.now();
+      _startHeartbeat();
     }
   }
 
@@ -106,9 +113,23 @@ class DashboardService with WidgetsBindingObserver {
         'appId': 'alarmly',
       });
 
+      _startHeartbeat();
+
     } catch (e) {
       debugPrint('⚠️ Log Visit Error: $e');
     }
+  }
+
+  void _startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      _updateCurrentSessionDuration();
+    });
+  }
+
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
   }
 
   Future<void> _updateCurrentSessionDuration() async {
@@ -138,7 +159,7 @@ class DashboardService with WidgetsBindingObserver {
     final deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       final androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.id; // Correct way to get ID on Android
+      return androidInfo.id;
     } else if (Platform.isIOS) {
       final iosInfo = await deviceInfo.iosInfo;
       return iosInfo.identifierForVendor ?? 'unknown_ios';
@@ -147,4 +168,18 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   FirebaseFirestore? get firestore => _firestore;
+
+  Future<Map<String, dynamic>?> getVersionConfig() async {
+    if (!_isInitialized || _firestore == null) await init();
+    try {
+      final doc = await _firestore!
+          .collection('settings')
+          .doc('app_config')
+          .get();
+      return doc.data();
+    } catch (e) {
+      debugPrint('⚠️ Version Check Error: $e');
+      return null;
+    }
+  }
 }
