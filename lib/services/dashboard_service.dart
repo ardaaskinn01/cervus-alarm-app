@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -11,8 +11,10 @@ class DashboardService with WidgetsBindingObserver {
   factory DashboardService() => _instance;
   DashboardService._internal();
 
-  FirebaseApp? _dashboardApp;
-  FirebaseFirestore? _firestore;
+  final String _projectId = "dashboard-baf3f";
+  final String _apiKey = "AIzaSyBPOS5L2Qdoi0kVXgyQnCoWuAdbUfh_YAo";
+  final String _appId = "alarmly";
+
   bool _isInitialized = false;
 
   // Session tracking variables
@@ -25,27 +27,8 @@ class DashboardService with WidgetsBindingObserver {
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // Ana Firebase projesinin oturması için küçük bir gecikme ekliyoruz
-    await Future.delayed(const Duration(seconds: 2));
-
     try {
-      // Manual Firebase initialization for the Dashboard project
-      _dashboardApp = Firebase.apps.any((app) => app.name == 'dashboard')
-          ? Firebase.app('dashboard')
-          : await Firebase.initializeApp(
-              name: 'dashboard',
-              options: const FirebaseOptions(
-                apiKey: "AIzaSyBPOS5L2Qdoi0kVXgyQnCoWuAdbUfh_YAo",
-                authDomain: "dashboard-baf3f.firebaseapp.com",
-                projectId: "dashboard-baf3f",
-                storageBucket: "dashboard-baf3f.firebasestorage.app",
-                messagingSenderId: "607527844560",
-                appId: "1:607527844560:web:2415525d9fa986fdc03cd5",
-                measurementId: "G-5CN9G1FZ0B",
-              ),
-            );
-
-      _firestore = FirebaseFirestore.instanceFor(app: _dashboardApp!);
+      _deviceId = await _getDeviceId();
       _isInitialized = true;
       
       // Setup lifecycle observer
@@ -57,7 +40,7 @@ class DashboardService with WidgetsBindingObserver {
         });
       }
       
-      debugPrint('✅ Dashboard Service connected (alarmly)');
+      debugPrint('✅ Dashboard Service initialized via REST (alarmly)');
     } catch (e) {
       debugPrint('❌ Dashboard Service Init Error: $e');
     }
@@ -77,44 +60,38 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   Future<void> logVisit() async {
-    if (!_isInitialized || _firestore == null) await init();
-    if (!_isInitialized) return;
-
+    if (!_isInitialized) await init();
+    
     try {
-      // Get Device ID
-      _deviceId = await _getDeviceId();
-      
-      // Get App Version
       final packageInfo = await PackageInfo.fromPlatform();
-      final String version = packageInfo.version;
-      final String buildNumber = packageInfo.buildNumber;
-
+      final String version = "${packageInfo.version}+${packageInfo.buildNumber}";
       final now = DateTime.now();
+      
       _currentVisitId = now.millisecondsSinceEpoch.toString();
       _sessionStartTime = now;
       _totalSecondsThisSession = 0;
 
-      // Log to users collection
-      final userRef = _firestore!.collection('users').doc(_deviceId);
-      await userRef.set({
-        'lastVisit': FieldValue.serverTimestamp(),
-        'platform': Platform.isIOS ? 'iOS' : 'Android',
-        'appId': 'alarmly',
-        'lastVersion': '$version+$buildNumber',
-      }, SetOptions(merge: true));
+      // 1. Update User Last Visit
+      final userPath = "users/$_deviceId";
+      await _setDocument(userPath, {
+        "lastVisit": {"stringValue": now.toIso8601String()},
+        "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
+        "appId": {"stringValue": _appId},
+        "lastVersion": {"stringValue": version},
+      }, merge: true);
 
-      // Log specific visit
-      await userRef.collection('visits').doc(_currentVisitId).set({
-        'appVersion': '$version+$buildNumber',
-        'platform': Platform.isIOS ? 'iOS' : 'Android',
-        'dateTime': now.toIso8601String(),
-        'timestamp': FieldValue.serverTimestamp(),
-        'durationSeconds': 0,
-        'appId': 'alarmly',
+      // 2. Create Visit Document
+      final visitPath = "users/$_deviceId/visits/$_currentVisitId";
+      await _setDocument(visitPath, {
+        "appVersion": {"stringValue": version},
+        "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
+        "dateTime": {"stringValue": now.toIso8601String()},
+        "timestamp": {"stringValue": now.toIso8601String()},
+        "durationSeconds": {"integerValue": "0"},
+        "appId": {"stringValue": _appId},
       });
 
       _startHeartbeat();
-
     } catch (e) {
       debugPrint('⚠️ Log Visit Error: $e');
     }
@@ -141,18 +118,66 @@ class DashboardService with WidgetsBindingObserver {
     _sessionStartTime = now;
 
     try {
-      await _firestore!
-          .collection('users')
-          .doc(_deviceId)
-          .collection('visits')
-          .doc(_currentVisitId)
-          .update({
-        'durationSeconds': _totalSecondsThisSession,
-        'lastUpdate': FieldValue.serverTimestamp(),
-      });
+      final visitPath = "users/$_deviceId/visits/$_currentVisitId";
+      await _setDocument(visitPath, {
+        "durationSeconds": {"integerValue": _totalSecondsThisSession.toString()},
+        "lastUpdate": {"stringValue": now.toIso8601String()},
+      }, merge: true, updateMask: ["durationSeconds", "lastUpdate"]);
     } catch (e) {
       debugPrint('⚠️ Session Update Error: $e');
     }
+  }
+
+  Future<Map<String, dynamic>?> getVersionConfig() async {
+    try {
+      // Path: settings/app_config
+      final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config?key=$_apiKey";
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return _simplifyFields(data['fields']);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Version Check Error: $e');
+    }
+    return null;
+  }
+
+  // --- REST Helpers ---
+
+  Future<void> _setDocument(String path, Map<String, dynamic> fields, {bool merge = false, List<String>? updateMask}) async {
+    // Firestore REST uses PATCH for both create and update if you want to use the document ID in the path
+    String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/$path?key=$_apiKey";
+    
+    if (updateMask != null) {
+      for (var field in updateMask) {
+        url += "&updateMask.fieldPaths=$field";
+      }
+    } else if (merge) {
+      for (var field in fields.keys) {
+        url += "&updateMask.fieldPaths=$field";
+      }
+    }
+
+    await http.patch(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: json.encode({"fields": fields}),
+    );
+  }
+
+  Map<String, dynamic> _simplifyFields(Map<String, dynamic> fields) {
+    final result = <String, dynamic>{};
+    fields.forEach((key, value) {
+      if (value is Map) {
+        if (value.containsKey('stringValue')) result[key] = value['stringValue'];
+        else if (value.containsKey('integerValue')) result[key] = int.tryParse(value['integerValue'].toString());
+        else if (value.containsKey('doubleValue')) result[key] = double.tryParse(value['doubleValue'].toString());
+        else if (value.containsKey('booleanValue')) result[key] = value['booleanValue'];
+      }
+    });
+    return result;
   }
 
   Future<String> _getDeviceId() async {
@@ -165,21 +190,5 @@ class DashboardService with WidgetsBindingObserver {
       return iosInfo.identifierForVendor ?? 'unknown_ios';
     }
     return 'unknown_platform';
-  }
-
-  FirebaseFirestore? get firestore => _firestore;
-
-  Future<Map<String, dynamic>?> getVersionConfig() async {
-    if (!_isInitialized || _firestore == null) await init();
-    try {
-      final doc = await _firestore!
-          .collection('settings')
-          .doc('app_config')
-          .get();
-      return doc.data();
-    } catch (e) {
-      debugPrint('⚠️ Version Check Error: $e');
-      return null;
-    }
   }
 }

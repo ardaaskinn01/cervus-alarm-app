@@ -226,7 +226,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       }
 
       // 4. FIREBASE VE ADMOB — AdMob'u await ile başlatıyoruz!
-      Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
+      await Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
       
       // REVENUE CAT BAŞLAT
       await RevenueCatService.init(ref);
