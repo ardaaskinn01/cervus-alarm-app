@@ -76,12 +76,12 @@ class DashboardService with WidgetsBindingObserver {
         'durationSeconds': {'integerValue': '0'},
       };
 
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey";
+      // Sigara/Quitly ile birebir: api_key YOK, Content-Type YOK
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId";
       
       final response = await http.patch(
         Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({"fields": fields}),
+        body: jsonEncode({"fields": fields}),
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
@@ -108,22 +108,18 @@ class DashboardService with WidgetsBindingObserver {
     _sessionStartTime = now;
 
     try {
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey&updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
+      // Sigara/Quitly ile birebir: api_key YOK, Content-Type YOK
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
       
-      final response = await http.patch(
+      await http.patch(
         Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({
+        body: jsonEncode({
           "fields": {
             "durationSeconds": {"integerValue": _totalSecondsThisSession.toString()},
             "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
           }
         }),
       );
-
-      if (response.statusCode != 200) {
-        debugPrint("Dashboard duration update failure: ${response.statusCode}");
-      }
     } catch (_) {}
   }
 
