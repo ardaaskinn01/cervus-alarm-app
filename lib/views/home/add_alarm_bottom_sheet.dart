@@ -474,8 +474,8 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
 
   Widget _methodChip(String label, String value, bool isUnlocked) {
     final bool isSelected = selectedStopMethod == value;
-    // Kilitli ve matematik dışındaki yöntemler için blur efekti
-    final bool shouldBlur = !isUnlocked && value != 'math';
+    final bool isMath = value == 'math';
+    final bool showProBadge = !isUnlocked && !isMath;
 
     return GestureDetector(
       onTap: () {
@@ -487,42 +487,39 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
           selectedStopMethod = value;
         });
       },
-      child: Stack(
-        children: [
-          // Chip kendisi
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryColor : Colors.white12,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? Colors.white24 : Colors.transparent,
-              ),
-            ),
-            child: Text(
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? AppTheme.primaryColor 
+              : (showProBadge ? Colors.white.withOpacity(0.03) : Colors.white12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected 
+                ? Colors.white24 
+                : (showProBadge ? Colors.amber.withOpacity(0.3) : Colors.transparent),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
+                color: isSelected 
+                    ? Colors.white 
+                    : (showProBadge ? Colors.white.withOpacity(0.4) : Colors.white70),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
-          ),
-          // Blur overlay (kilitliyse)
-          if (shouldBlur)
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 3.5, sigmaY: 3.5),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    color: Colors.black.withOpacity(0.25),
-                  ),
-                ),
-              ),
-            ),
-        ],
+            if (showProBadge) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.workspace_premium_rounded, size: 14, color: Colors.amber),
+            ],
+          ],
+        ),
       ),
     );
   }

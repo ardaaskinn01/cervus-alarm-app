@@ -23,6 +23,7 @@ class SettingsView extends ConsumerStatefulWidget {
 class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBindingObserver {
   late bool _vibrate;
   late int _puzzleCount;
+  late int _mathDifficulty;
   late List<Map<String, dynamic>> _customQuestions;
   late List<Map<String, dynamic>> _customSounds;
   final InAppReview _inAppReview = InAppReview.instance;
@@ -34,6 +35,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
     final storage = ref.read(localStorageServiceProvider);
     _vibrate = storage.getGlobalVibrate();
     _puzzleCount = storage.getPuzzleQuestionCount();
+    _mathDifficulty = storage.getMathDifficulty();
     _customQuestions = storage.getCustomQuestions();
     _customSounds = storage.getCustomSounds();
   }
@@ -158,7 +160,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                             package: yearly,
                             title: isTr ? "Yıllık" : "Yearly",
                             price: yearly.storeProduct.priceString,
-                            originalPrice: isTr ? "999.00 ₺" : "\$59.99",
+                            originalPrice: isTr ? "599.99 ₺" : "\$35.99",
                             subtitle: isTr ? "En maliyet etkin seçim" : "Best value for money",
                             isPopular: true,
                             isTr: isTr,
@@ -604,6 +606,31 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                         child: Text(value.toString()),
                       );
                     }).toList(),
+                  ),
+                ),
+              ),
+              _buildSettingTile(
+                icon: Icons.speed_rounded,
+                title: AppLocalizations.get('settings_math_difficulty_title', locale),
+                subtitle: AppLocalizations.get('settings_math_difficulty_subtitle', locale),
+                iconColor: Colors.orangeAccent,
+                trailing: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _mathDifficulty,
+                    dropdownColor: AppTheme.cardColor,
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    onChanged: (int? newValue) async {
+                      if (newValue != null) {
+                        setState(() => _mathDifficulty = newValue);
+                        await ref.read(localStorageServiceProvider).setMathDifficulty(newValue);
+                      }
+                    },
+                    items: [
+                      DropdownMenuItem(value: 1, child: Text(AppLocalizations.get('difficulty_easy', locale))),
+                      DropdownMenuItem(value: 2, child: Text(AppLocalizations.get('difficulty_medium', locale))),
+                      DropdownMenuItem(value: 3, child: Text(AppLocalizations.get('difficulty_hard', locale))),
+                    ],
                   ),
                 ),
               ),

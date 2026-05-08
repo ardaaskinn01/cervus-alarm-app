@@ -24,11 +24,11 @@ class DashboardService with WidgetsBindingObserver {
   int _totalSecondsThisSession = 0;
   Timer? _heartbeatTimer;
 
-  Future<void> init() async {
+  Future<void> init(String deviceId) async {
     if (_isInitialized) return;
 
     try {
-      _deviceId = await _getDeviceId();
+      _deviceId = deviceId;
       _isInitialized = true;
       
       // Setup lifecycle observer
@@ -40,7 +40,7 @@ class DashboardService with WidgetsBindingObserver {
         });
       }
       
-      debugPrint('✅ Dashboard Service initialized via REST (alarmly)');
+      debugPrint('✅ Dashboard Service initialized (ID: $_deviceId)');
     } catch (e) {
       debugPrint('❌ Dashboard Service Init Error: $e');
     }
@@ -60,7 +60,7 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   Future<void> logVisit() async {
-    if (!_isInitialized) await init();
+    if (!_isInitialized || _deviceId == null) return;
     
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -74,7 +74,7 @@ class DashboardService with WidgetsBindingObserver {
       // 1. Update User Last Visit
       final userPath = "users/$_deviceId";
       await _setDocument(userPath, {
-        "lastVisit": {"stringValue": now.toIso8601String()},
+        "lastVisit": {"timestampValue": now.toUtc().toIso8601String()},
         "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
         "appId": {"stringValue": _appId},
         "lastVersion": {"stringValue": version},
@@ -86,7 +86,7 @@ class DashboardService with WidgetsBindingObserver {
         "appVersion": {"stringValue": version},
         "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
         "dateTime": {"stringValue": now.toIso8601String()},
-        "timestamp": {"stringValue": now.toIso8601String()},
+        "timestamp": {"timestampValue": now.toUtc().toIso8601String()},
         "durationSeconds": {"integerValue": "0"},
         "appId": {"stringValue": _appId},
       });
@@ -121,7 +121,7 @@ class DashboardService with WidgetsBindingObserver {
       final visitPath = "users/$_deviceId/visits/$_currentVisitId";
       await _setDocument(visitPath, {
         "durationSeconds": {"integerValue": _totalSecondsThisSession.toString()},
-        "lastUpdate": {"stringValue": now.toIso8601String()},
+        "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
       }, merge: true, updateMask: ["durationSeconds", "lastUpdate"]);
     } catch (e) {
       debugPrint('⚠️ Session Update Error: $e');
@@ -130,7 +130,6 @@ class DashboardService with WidgetsBindingObserver {
 
   Future<Map<String, dynamic>?> getVersionConfig() async {
     try {
-      // Path: settings/app_config
       final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config?key=$_apiKey";
       final response = await http.get(Uri.parse(url));
 
@@ -147,7 +146,6 @@ class DashboardService with WidgetsBindingObserver {
   // --- REST Helpers ---
 
   Future<void> _setDocument(String path, Map<String, dynamic> fields, {bool merge = false, List<String>? updateMask}) async {
-    // Firestore REST uses PATCH for both create and update if you want to use the document ID in the path
     String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/$path?key=$_apiKey";
     
     if (updateMask != null) {
@@ -160,11 +158,19 @@ class DashboardService with WidgetsBindingObserver {
       }
     }
 
-    await http.patch(
-      Uri.parse(url),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode({"fields": fields}),
-    );
+    try {
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({"fields": fields}),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint('❌ Dashboard REST Error (${response.statusCode}): ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Dashboard REST Network Error: $e');
+    }
   }
 
   Map<String, dynamic> _simplifyFields(Map<String, dynamic> fields) {
@@ -178,17 +184,5 @@ class DashboardService with WidgetsBindingObserver {
       }
     });
     return result;
-  }
-
-  Future<String> _getDeviceId() async {
-    final deviceInfo = DeviceInfoPlugin();
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.id;
-    } else if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      return iosInfo.identifierForVendor ?? 'unknown_ios';
-    }
-    return 'unknown_platform';
   }
 }

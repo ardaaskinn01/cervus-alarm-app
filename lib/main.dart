@@ -232,6 +232,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       await RevenueCatService.init(ref);
 
       // 4.1 DASHBOARD TELEMETRY (Non-blocking)
+      final storageService = ref.read(localStorageServiceProvider);
+      final String installationId = await storageService.getInstallationId();
+      await DashboardService().init(installationId);
       DashboardService().logVisit();
       
       if (Platform.isIOS) {

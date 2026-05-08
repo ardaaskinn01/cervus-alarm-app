@@ -28,6 +28,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
   
   int _targetQuestionCount = 1;
   int _questionsSolved = 0;
+  int _mathDifficulty = 1;
   List<Map<String, dynamic>> _customQuestions = [];
   String _currentQuestionString = "";
 
@@ -41,6 +42,7 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     super.initState();
     final storage = ref.read(localStorageServiceProvider);
     _targetQuestionCount = storage.getPuzzleQuestionCount();
+    _mathDifficulty = storage.getMathDifficulty();
     _customQuestions = storage.getCustomQuestions();
     _generatePuzzle();
   }
@@ -53,9 +55,20 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     } else {
       final random = Random();
       final isSubtraction = random.nextBool();
+      
+      int min = 10;
+      int range = 90;
+      
+      if (_mathDifficulty == 2) {
+        min = 100;
+        range = 900;
+      } else if (_mathDifficulty == 3) {
+        min = 1000;
+        range = 9000;
+      }
 
-      num1 = random.nextInt(30) + 1; 
-      num2 = random.nextInt(30) + 1; 
+      num1 = random.nextInt(range) + min; 
+      num2 = random.nextInt(range) + min; 
 
       if (isSubtraction) {
         if (num1 < num2) {

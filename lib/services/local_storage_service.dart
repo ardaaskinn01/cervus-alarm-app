@@ -1,5 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math';
+import 'dart:io';
 import '../models/alarm_model.dart';
 
 // Riverpod provider for LocalStorageService
@@ -74,6 +76,14 @@ class LocalStorageService {
     await Hive.box(_settingsBoxName).put('puzzle_question_count', count);
   }
 
+  int getMathDifficulty() {
+    return Hive.box(_settingsBoxName).get('math_difficulty', defaultValue: 1);
+  }
+
+  Future<void> setMathDifficulty(int level) async {
+    await Hive.box(_settingsBoxName).put('math_difficulty', level);
+  }
+
   List<Map<String, dynamic>> getCustomQuestions() {
     final list = Hive.box(_settingsBoxName).get('custom_questions', defaultValue: []);
     return List<Map<String, dynamic>>.from(list.map((e) => Map<String, dynamic>.from(e)));
@@ -118,5 +128,20 @@ class LocalStorageService {
       list.removeAt(index);
       await Hive.box(_settingsBoxName).put('custom_sounds', list);
     }
+  }
+
+  Future<String> getInstallationId() async {
+    final box = Hive.box(_settingsBoxName);
+    String? id = box.get('installation_id');
+    
+    if (id == null) {
+      final random = Random();
+      final randomStr = List.generate(6, (_) => random.nextInt(10)).join();
+      final platformPrefix = Platform.isIOS ? 'ios_user_' : 'android_user_';
+      id = '$platformPrefix$randomStr';
+      await box.put('installation_id', id);
+    }
+    
+    return id;
   }
 }
