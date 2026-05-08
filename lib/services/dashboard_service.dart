@@ -52,10 +52,15 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   Future<void> logVisit() async {
-    if (!_isInitialized || _deviceId == null) return;
+    _showScreenError("DASHBOARD: Başladı... (Cihaz: $_deviceId)");
+    
+    if (!_isInitialized || _deviceId == null) {
+      _showScreenError("DASHBOARD: HATA - Servis init edilmemiş!");
+      return;
+    }
     
     if (Platform.isIOS) {
-      await Future.delayed(const Duration(seconds: 4));
+      await Future.delayed(const Duration(seconds: 1));
     }
 
     try {
@@ -76,21 +81,24 @@ class DashboardService with WidgetsBindingObserver {
         'durationSeconds': {'integerValue': '0'},
       };
 
-      // Sigara/Quitly ile birebir: api_key YOK, Content-Type YOK
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId";
+      _showScreenError("DASHBOARD: Ağ isteği gönderiliyor...");
+
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey";
       
       final response = await http.patch(
         Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({"fields": fields}),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
-        _showScreenError("Log Failure: ${response.statusCode}\n${response.body}");
+        _showScreenError("DASHBOARD HATA (${response.statusCode}): ${response.body}");
       } else {
         _startHeartbeat();
+        _showScreenError("DASHBOARD: BAŞARILI! ✅ (Veri Yazıldı)");
       }
     } catch (e) {
-      _showScreenError("Network/General Error: $e");
+      _showScreenError("DASHBOARD KRİTİK HATA: $e");
     }
   }
 
@@ -108,11 +116,11 @@ class DashboardService with WidgetsBindingObserver {
     _sessionStartTime = now;
 
     try {
-      // Sigara/Quitly ile birebir: api_key YOK, Content-Type YOK
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey&updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
       
       await http.patch(
         Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "fields": {
             "durationSeconds": {"integerValue": _totalSecondsThisSession.toString()},

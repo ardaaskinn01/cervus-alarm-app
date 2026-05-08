@@ -230,11 +230,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       // REVENUE CAT BAŞLAT
       await RevenueCatService.init(ref);
 
-      // 4.1 DASHBOARD TELEMETRY (Non-blocking)
+      // 4.1 DASHBOARD TELEMETRY (Awaited on iOS to prevent suspension)
       final storageService = ref.read(localStorageServiceProvider);
       final String installationId = await storageService.getInstallationId();
       await DashboardService().init(installationId);
-      DashboardService().logVisit();
+      if (Platform.isIOS) {
+        await DashboardService().logVisit();
+      } else {
+        DashboardService().logVisit();
+      }
       
       if (Platform.isIOS) {
         // iOS için ATT İzni Talebi
