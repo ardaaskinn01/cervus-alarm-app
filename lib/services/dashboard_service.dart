@@ -3,8 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import '../core/navigator_key.dart';
 
 class DashboardService with WidgetsBindingObserver {
   static final DashboardService _instance = DashboardService._internal();
@@ -16,43 +15,36 @@ class DashboardService with WidgetsBindingObserver {
   final String _appId = "alarmly";
 
   bool _isInitialized = false;
-
-  // Session tracking variables
-  DateTime? _sessionStartTime;
   String? _deviceId;
   String? _currentVisitId;
+  DateTime? _sessionStartTime;
   int _totalSecondsThisSession = 0;
   Timer? _heartbeatTimer;
 
+  void _showScreenError(String msg) {
+    if (navigatorKey.currentState?.context != null) {
+      ScaffoldMessenger.of(navigatorKey.currentState!.context).showSnackBar(
+        SnackBar(
+          content: Text("DASHBOARD ERROR: $msg"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 10),
+        ),
+      );
+    }
+  }
+
   Future<void> init(String deviceId) async {
     if (_isInitialized) return;
-
-    try {
-      _deviceId = deviceId;
-      _isInitialized = true;
-      
-      // Setup lifecycle observer
-      if (WidgetsBinding.instance.lifecycleState != null) {
-        WidgetsBinding.instance.addObserver(this);
-      } else {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          WidgetsBinding.instance.addObserver(this);
-        });
-      }
-      
-      debugPrint('✅ Dashboard Service initialized (ID: $_deviceId)');
-    } catch (e) {
-      debugPrint('❌ Dashboard Service Init Error: $e');
-    }
+    _deviceId = deviceId;
+    _isInitialized = true;
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_isInitialized) return;
-
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _stopHeartbeat();
-      _updateCurrentSessionDuration();
+      _updateDuration();
+      _heartbeatTimer?.cancel();
     } else if (state == AppLifecycleState.resumed) {
       _sessionStartTime = DateTime.now();
       _startHeartbeat();
@@ -62,70 +54,77 @@ class DashboardService with WidgetsBindingObserver {
   Future<void> logVisit() async {
     if (!_isInitialized || _deviceId == null) return;
     
+    if (Platform.isIOS) {
+      await Future.delayed(const Duration(seconds: 4));
+    }
+
     try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      final String version = "${packageInfo.version}+${packageInfo.buildNumber}";
       final now = DateTime.now();
+      final String date = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final String time = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
       
-      _currentVisitId = now.millisecondsSinceEpoch.toString();
+      _currentVisitId = DateTime.now().millisecondsSinceEpoch.toString();
       _sessionStartTime = now;
       _totalSecondsThisSession = 0;
 
-      // 1. Update User Last Visit
-      final userPath = "users/$_deviceId";
-      await _setDocument(userPath, {
-        "lastVisit": {"timestampValue": now.toUtc().toIso8601String()},
-        "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
-        "appId": {"stringValue": _appId},
-        "lastVersion": {"stringValue": version},
-      }, merge: true);
+      final Map<String, dynamic> fields = {
+        'date': {'stringValue': date},
+        'time': {'stringValue': time},
+        'platform': {'stringValue': Platform.isIOS ? 'iOS' : 'Android'},
+        'appId': {'stringValue': _appId},
+        'timestamp': {'timestampValue': now.toUtc().toIso8601String()},
+        'durationSeconds': {'integerValue': '0'},
+      };
 
-      // 2. Create Visit Document
-      final visitPath = "users/$_deviceId/visits/$_currentVisitId";
-      await _setDocument(visitPath, {
-        "appVersion": {"stringValue": version},
-        "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
-        "dateTime": {"stringValue": now.toIso8601String()},
-        "timestamp": {"timestampValue": now.toUtc().toIso8601String()},
-        "durationSeconds": {"integerValue": "0"},
-        "appId": {"stringValue": _appId},
-      });
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey";
+      
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({"fields": fields}),
+      ).timeout(const Duration(seconds: 15));
 
-      _startHeartbeat();
+      if (response.statusCode != 200) {
+        _showScreenError("Log Failure: ${response.statusCode}\n${response.body}");
+      } else {
+        _startHeartbeat();
+      }
     } catch (e) {
-      debugPrint('⚠️ Log Visit Error: $e');
+      _showScreenError("Network/General Error: $e");
     }
   }
 
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      _updateCurrentSessionDuration();
-    });
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 20), (_) => _updateDuration());
   }
 
-  void _stopHeartbeat() {
-    _heartbeatTimer?.cancel();
-    _heartbeatTimer = null;
-  }
-
-  Future<void> _updateCurrentSessionDuration() async {
-    if (!_isInitialized || _sessionStartTime == null || _deviceId == null || _currentVisitId == null) return;
+  void _updateDuration() async {
+    if (_sessionStartTime == null || _deviceId == null || _currentVisitId == null) return;
 
     final now = DateTime.now();
-    final int elapsedSeconds = now.difference(_sessionStartTime!).inSeconds;
-    _totalSecondsThisSession += elapsedSeconds;
+    final int elapsed = now.difference(_sessionStartTime!).inSeconds;
+    _totalSecondsThisSession += elapsed;
     _sessionStartTime = now;
 
     try {
-      final visitPath = "users/$_deviceId/visits/$_currentVisitId";
-      await _setDocument(visitPath, {
-        "durationSeconds": {"integerValue": _totalSecondsThisSession.toString()},
-        "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
-      }, merge: true, updateMask: ["durationSeconds", "lastUpdate"]);
-    } catch (e) {
-      debugPrint('⚠️ Session Update Error: $e');
-    }
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey&updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
+      
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({
+          "fields": {
+            "durationSeconds": {"integerValue": _totalSecondsThisSession.toString()},
+            "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
+          }
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint("Dashboard duration update failure: ${response.statusCode}");
+      }
+    } catch (_) {}
   }
 
   Future<Map<String, dynamic>?> getVersionConfig() async {
@@ -137,40 +136,8 @@ class DashboardService with WidgetsBindingObserver {
         final data = json.decode(response.body);
         return _simplifyFields(data['fields']);
       }
-    } catch (e) {
-      debugPrint('⚠️ Version Check Error: $e');
-    }
+    } catch (_) {}
     return null;
-  }
-
-  // --- REST Helpers ---
-
-  Future<void> _setDocument(String path, Map<String, dynamic> fields, {bool merge = false, List<String>? updateMask}) async {
-    String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/$path?key=$_apiKey";
-    
-    if (updateMask != null) {
-      for (var field in updateMask) {
-        url += "&updateMask.fieldPaths=$field";
-      }
-    } else if (merge) {
-      for (var field in fields.keys) {
-        url += "&updateMask.fieldPaths=$field";
-      }
-    }
-
-    try {
-      final response = await http.patch(
-        Uri.parse(url),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({"fields": fields}),
-      );
-
-      if (response.statusCode != 200) {
-        debugPrint('❌ Dashboard REST Error (${response.statusCode}): ${response.body}');
-      }
-    } catch (e) {
-      debugPrint('❌ Dashboard REST Network Error: $e');
-    }
   }
 
   Map<String, dynamic> _simplifyFields(Map<String, dynamic> fields) {
