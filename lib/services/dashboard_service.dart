@@ -21,18 +21,6 @@ class DashboardService with WidgetsBindingObserver {
   int _totalSecondsThisSession = 0;
   Timer? _heartbeatTimer;
 
-  void _showScreenError(String msg) {
-    if (navigatorKey.currentState?.context != null) {
-      ScaffoldMessenger.of(navigatorKey.currentState!.context).showSnackBar(
-        SnackBar(
-          content: Text("DASHBOARD ERROR: $msg"),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 10),
-        ),
-      );
-    }
-  }
-
   Future<void> init(String deviceId) async {
     if (_isInitialized) return;
     _deviceId = deviceId;
@@ -52,12 +40,7 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   Future<void> logVisit() async {
-    _showScreenError("DASHBOARD: Başladı... (Cihaz: $_deviceId)");
-    
-    if (!_isInitialized || _deviceId == null) {
-      _showScreenError("DASHBOARD: HATA - Servis init edilmemiş!");
-      return;
-    }
+    if (!_isInitialized || _deviceId == null) return;
     
     if (Platform.isIOS) {
       await Future.delayed(const Duration(seconds: 1));
@@ -81,8 +64,6 @@ class DashboardService with WidgetsBindingObserver {
         'durationSeconds': {'integerValue': '0'},
       };
 
-      _showScreenError("DASHBOARD: Ağ isteği gönderiliyor...");
-
       final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey";
       
       final response = await http.patch(
@@ -91,15 +72,10 @@ class DashboardService with WidgetsBindingObserver {
         body: jsonEncode({"fields": fields}),
       ).timeout(const Duration(seconds: 10));
 
-      if (response.statusCode != 200) {
-        _showScreenError("DASHBOARD HATA (${response.statusCode}): ${response.body}");
-      } else {
+      if (response.statusCode == 200) {
         _startHeartbeat();
-        _showScreenError("DASHBOARD: BAŞARILI! ✅ (Veri Yazıldı)");
       }
-    } catch (e) {
-      _showScreenError("DASHBOARD KRİTİK HATA: $e");
-    }
+    } catch (_) {}
   }
 
   void _startHeartbeat() {
