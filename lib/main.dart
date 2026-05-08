@@ -249,7 +249,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       await MobileAds.instance.initialize();
 
       // 5. DİL SENKRONIZASYONU
-      final storageService = ref.read(localStorageServiceProvider);
       final savedLanguage = storageService.getLanguage();
       ref.read(localeProvider.notifier).setLocaleSync(savedLanguage);
 
