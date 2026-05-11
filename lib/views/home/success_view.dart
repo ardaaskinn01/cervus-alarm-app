@@ -79,16 +79,16 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
 
     _controller.forward();
     
-    // Premium kontrolü: Sadece premium değilse VE soğuma süresi geçmişse reklam yükle
+    // Premium kontrolü: Sadece premium değilse VE soğuma süresi geçmişse reklam yükle ve GÖSTER
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isPremium = ref.read(isPremiumProvider);
       if (!isPremium && AdHelper.canShowInterstitial) {
-        _loadInterstitialAd();
+        _loadInterstitialAd(showImmediately: true);
       }
     });
   }
 
-  void _loadInterstitialAd() {
+  void _loadInterstitialAd({bool showImmediately = false}) {
     InterstitialAd.load(
       adUnitId: AdHelper.interstitialAdUnitId,
       request: const AdRequest(),
@@ -96,6 +96,9 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
         onAdLoaded: (ad) {
           debugPrint('InterstitialAd loaded.');
           _interstitialAd = ad;
+          if (showImmediately) {
+            _showInterstitialAdInline();
+          }
         },
         onAdFailedToLoad: (LoadAdError error) {
           debugPrint('InterstitialAd failed to load: $error');
@@ -105,31 +108,25 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
     );
   }
 
-  void _showInterstitialAdAndReturn() {
-    final isPremium = ref.read(isPremiumProvider);
-    
-    if (isPremium || _interstitialAd == null || !AdHelper.canShowInterstitial) {
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-      return;
-    }
+  void _showInterstitialAdInline() {
+    if (_interstitialAd == null) return;
 
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
-        AdHelper.recordAdShown(); // Reklam geçmişini kaydet
+        AdHelper.recordAdShown();
         ad.dispose();
-        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       },
       onAdFailedToShowFullScreenContent: (ad, err) {
-        debugPrint('Ad failed to show: $err');
         ad.dispose();
-        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       },
     );
 
     _interstitialAd!.show();
     _interstitialAd = null;
+  }
+
+  void _showInterstitialAdAndReturn() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override

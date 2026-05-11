@@ -53,7 +53,7 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
       // Alarm çaldı → rewardUnlocked sıfırla (kilit bir kez çaldıktan sonra geri gelsin)
       if (currentAlarm.rewardUnlocked) {
         final updatedAlarm = currentAlarm.copyWith(rewardUnlocked: false);
-        ref.read(homeViewModelProvider.notifier).editAlarm(updatedAlarm);
+        ref.read(homeViewModelProvider.notifier).silentEditAlarm(updatedAlarm);
       }
     } catch (e) {
       debugPrint("Alarm bulunamadı, math ile devam ediliyor.");

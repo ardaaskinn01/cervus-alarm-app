@@ -68,6 +68,13 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
     }
   }
 
+  /// Sadece veritabanını ve UI'ı günceller, alarm servisini (sesi) kurcalamaz.
+  Future<void> silentEditAlarm(AlarmModel updatedAlarm) async {
+    final storage = ref.read(localStorageServiceProvider);
+    await storage.updateAlarm(updatedAlarm);
+    state = _getSortedAlarms();
+  }
+
   Future<void> toggleAlarm(AlarmModel alarm, bool isActive) async {
     final storage = ref.read(localStorageServiceProvider);
     final alarmService = ref.read(alarmServiceProvider);
