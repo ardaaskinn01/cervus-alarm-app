@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 import '../core/navigator_key.dart';
 
 class DashboardService with WidgetsBindingObserver {
@@ -11,7 +12,6 @@ class DashboardService with WidgetsBindingObserver {
   DashboardService._internal();
 
   final String _projectId = "dashboard-baf3f";
-  final String _apiKey = "AIzaSyBPOS5L2Qdoi0kVXgyQnCoWuAdbUfh_YAo";
   final String _appId = "alarmly";
 
   bool _isInitialized = false;
@@ -51,31 +51,56 @@ class DashboardService with WidgetsBindingObserver {
       final String date = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
       final String time = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
       
-      _currentVisitId = DateTime.now().millisecondsSinceEpoch.toString();
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      final String appVersion = "${packageInfo.version} (Build ${packageInfo.buildNumber})";
+
+      final String userUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId?updateMask.fieldPaths=lastVisit&updateMask.fieldPaths=platform&updateMask.fieldPaths=appId&updateMask.fieldPaths=lastUpdate&updateMask.fieldPaths=appVersion";
+      
+      await http.patch(
+        Uri.parse(userUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "fields": {
+            "lastVisit": {"stringValue": date + " " + time},
+            "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
+            "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
+            "appId": {"stringValue": _appId},
+            "appVersion": {"stringValue": appVersion},
+          }
+        }),
+      );
+
+      _currentVisitId = now.millisecondsSinceEpoch.toString();
       _sessionStartTime = now;
       _totalSecondsThisSession = 0;
 
-      final Map<String, dynamic> fields = {
-        'date': {'stringValue': date},
-        'time': {'stringValue': time},
-        'platform': {'stringValue': Platform.isIOS ? 'iOS' : 'Android'},
-        'appId': {'stringValue': _appId},
-        'timestamp': {'timestampValue': now.toUtc().toIso8601String()},
-        'durationSeconds': {'integerValue': '0'},
-      };
-
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey";
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId";
       
       final response = await http.patch(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"fields": fields}),
+        body: jsonEncode({
+          "fields": {
+            'date': {'stringValue': date},
+            'time': {'stringValue': time},
+            'platform': {'stringValue': Platform.isIOS ? 'iOS' : 'Android'},
+            'appId': {'stringValue': _appId},
+            'appVersion': {'stringValue': appVersion},
+            'timestamp': {'timestampValue': now.toUtc().toIso8601String()},
+            'durationSeconds': {'integerValue': '0'},
+          }
+        }),
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         _startHeartbeat();
+        debugPrint("📊 Dashboard visit log success: $_currentVisitId");
+      } else {
+        debugPrint("⚠️ Dashboard visit log ERROR ${response.statusCode}: ${response.body}");
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("⚠️ Dashboard logVisit EXCEPTION: $e");
+    }
   }
 
   void _startHeartbeat() {
@@ -92,9 +117,9 @@ class DashboardService with WidgetsBindingObserver {
     _sessionStartTime = now;
 
     try {
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey&updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
       
-      await http.patch(
+      final response = await http.patch(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -104,19 +129,29 @@ class DashboardService with WidgetsBindingObserver {
           }
         }),
       );
-    } catch (_) {}
+
+      if (response.statusCode != 200) {
+        debugPrint("⚠️ Dashboard updateDuration ERROR ${response.statusCode}: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("⚠️ Dashboard _updateDuration EXCEPTION: $e");
+    }
   }
 
   Future<Map<String, dynamic>?> getVersionConfig() async {
     try {
-      final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config?key=$_apiKey";
+      final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config";
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return _simplifyFields(data['fields']);
+      } else {
+        debugPrint("⚠️ Dashboard getVersionConfig ERROR ${response.statusCode}: ${response.body}");
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("⚠️ Dashboard getVersionConfig EXCEPTION: $e");
+    }
     return null;
   }
 
@@ -124,10 +159,15 @@ class DashboardService with WidgetsBindingObserver {
     final result = <String, dynamic>{};
     fields.forEach((key, value) {
       if (value is Map) {
-        if (value.containsKey('stringValue')) result[key] = value['stringValue'];
-        else if (value.containsKey('integerValue')) result[key] = int.tryParse(value['integerValue'].toString());
-        else if (value.containsKey('doubleValue')) result[key] = double.tryParse(value['doubleValue'].toString());
-        else if (value.containsKey('booleanValue')) result[key] = value['booleanValue'];
+        if (value.containsKey('stringValue')) {
+          result[key] = value['stringValue'].toString();
+        } else if (value.containsKey('integerValue')) {
+          result[key] = int.tryParse(value['integerValue'].toString());
+        } else if (value.containsKey('doubleValue')) {
+          result[key] = double.tryParse(value['doubleValue'].toString());
+        } else if (value.containsKey('booleanValue')) {
+          result[key] = value['booleanValue'] as bool;
+        }
       }
     });
     return result;
