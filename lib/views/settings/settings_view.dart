@@ -160,7 +160,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                             package: yearly,
                             title: isTr ? "Yıllık" : "Yearly",
                             price: yearly.storeProduct.priceString,
-                            originalPrice: isTr ? "599.99 ₺" : "\$35.99",
+                            originalPrice: isTr ? "₺599.99" : "\$35.99",
                             subtitle: isTr ? "En maliyet etkin seçim" : "Best value for money",
                             isPopular: true,
                             isTr: isTr,
