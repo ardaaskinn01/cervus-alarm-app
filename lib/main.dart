@@ -275,8 +275,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
       }
 
-      // 6. VERSİYON KONTROLÜ (Non-blocking)
-      _checkForUpdate();
+      // 6. VERSİYON KONTROLÜ (Blocking - Drinkly/Quitly Pattern)
+      await _checkForUpdate();
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -303,31 +303,31 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       final packageInfo = await PackageInfo.fromPlatform();
       final int currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
-      final int latestBuild = config['buildNumber'] as int? ?? currentBuild;
+      final int latestBuild = int.tryParse(config['buildNumber']?.toString() ?? "") ?? currentBuild;
+
+      debugPrint("🔍 Version Check: Device=$currentBuild, Market=$latestBuild");
 
       // Eğer mağazadaki build numarası cihazdakinden büyükse güncelleme vardır
       if (latestBuild > currentBuild) {
         if (!mounted) return;
         
-        Future.delayed(const Duration(seconds: 3), () {
-          if (!mounted) return;
-          _showUpdateDialog(
-            config['androidUrl'] ?? "https://play.google.com/store/apps/details?id=com.cervus.alarmly",
-            config['iosUrl'] ?? "https://apps.apple.com/app/id6761625063",
-          );
-        });
+        // Diyaloğu Splash ekranı henüz kapanmadan gösteriyoruz
+        await _showUpdateDialog(
+          config['androidUrl']?.toString() ?? "https://play.google.com/store/apps/details?id=com.cervus.alarmly",
+          config['iosUrl']?.toString() ?? "https://apps.apple.com/app/id6761625063",
+        );
       }
     } catch (e) {
       debugPrint("Versiyon kontrol hatası: $e");
     }
   }
 
-  void _showUpdateDialog(String androidUrl, String iosUrl) {
+  Future<void> _showUpdateDialog(String androidUrl, String iosUrl) async {
     final locale = ref.read(localeProvider);
     final isTr = locale == 'tr';
 
-    showDialog(
-      context: navigatorKey.currentContext!,
+    return showDialog(
+      context: context,
       barrierDismissible: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.cardColor,
