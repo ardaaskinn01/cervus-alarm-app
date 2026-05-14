@@ -5,6 +5,8 @@ import '../services/local_storage_service.dart';
 import '../services/alarm_service.dart';
 import '../core/app_localizations.dart';
 
+import 'package:alarm/alarm.dart';
+
 class HomeViewModel extends Notifier<List<AlarmModel>> {
   @override
   List<AlarmModel> build() {
@@ -13,7 +15,40 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
       if (a.hour != b.hour) return a.hour.compareTo(b.hour);
       return a.minute.compareTo(b.minute);
     });
+
+    // Uygulama açıldığında geçmişte kalmış (çalmış ama hala aktif görünen) 
+    // tek seferlik alarmları temizle
+    Future.microtask(() => checkStaleAlarms());
+
     return alarms;
+  }
+
+  /// Çalmış ve bitmiş tek seferlik alarmları veritabanında pasif yapar.
+  Future<void> checkStaleAlarms() async {
+    final storage = ref.read(localStorageServiceProvider);
+    bool changed = false;
+    final currentAlarms = List<AlarmModel>.from(state);
+
+    for (int i = 0; i < currentAlarms.length; i++) {
+      final alarm = currentAlarms[i];
+      
+      // Eğer alarm aktifse ve tekrar günü seçilmemişse (tek seferlikse)
+      if (alarm.isActive && alarm.repeatDays.isEmpty) {
+        final scheduledAlarm = Alarm.getAlarm(alarm.id);
+        
+        // Eğer alarm paketi bu ID'yi artık listesinde tutmuyorsa (çalmış demektir)
+        if (scheduledAlarm == null) {
+          final updated = alarm.copyWith(isActive: false);
+          await storage.updateAlarm(updated);
+          currentAlarms[i] = updated;
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      state = currentAlarms;
+    }
   }
 
   List<AlarmModel> _getSortedAlarms() {

@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/material.dart';
 
 class AdHelper {
   static DateTime? _lastInterstitialTime;
   static const Duration _adCooldown = Duration(seconds: 45);
+  static InterstitialAd? _preloadedAd;
 
   static bool get canShowInterstitial {
     if (_lastInterstitialTime == null) return true;
@@ -13,31 +16,59 @@ class AdHelper {
     _lastInterstitialTime = DateTime.now();
   }
 
-  static String get bannerAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-2073707860224174/2356130826'; // Real Android Banner Ad Unit ID
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-2073707860224174/1418973199'; // Real iOS Banner Ad Unit ID
+  // Preload Interstitial
+  static void preloadInterstitialAd() {
+    if (!canShowInterstitial) return;
+    
+    InterstitialAd.load(
+      adUnitId: interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _preloadedAd = ad;
+        },
+        onAdFailedToLoad: (err) {
+          _preloadedAd = null;
+        },
+      ),
+    );
+  }
+
+  // Show Preloaded Ad
+  static void showInterstitialAd(BuildContext context) {
+    if (_preloadedAd != null && canShowInterstitial) {
+      _preloadedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          recordAdShown();
+          ad.dispose();
+          _preloadedAd = null;
+          preloadInterstitialAd(); // Load next one
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _preloadedAd = null;
+        },
+      );
+      _preloadedAd!.show();
     }
-    throw UnsupportedError('Unsupported platform');
+  }
+
+  static String get bannerAdUnitId {
+    if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/2356130826';
+    if (Platform.isIOS) return 'ca-app-pub-2073707860224174/1418973199';
+    return '';
   }
 
   static String get interstitialAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-2073707860224174/6027839020'; // Real Android Interstitial Ad Unit ID
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-2073707860224174/4152498035'; // Real iOS Interstitial Ad Unit ID
-    }
-    throw UnsupportedError('Unsupported platform');
+    if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/6027839020';
+    if (Platform.isIOS) return 'ca-app-pub-2073707860224174/4152498035';
+    return '';
   }
 
   static String get rewardedAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-2073707860224174/1756914342'; // Real Android Rewarded Ad Unit ID
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-2073707860224174/8798859050'; // Real iOS Rewarded Ad Unit ID
-    }
-    throw UnsupportedError('Unsupported platform');
+    if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/1756914342';
+    if (Platform.isIOS) return 'ca-app-pub-2073707860224174/8798859050';
+    return '';
   }
 }
 

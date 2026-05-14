@@ -40,10 +40,13 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   Future<void> logVisit() async {
-    if (!_isInitialized || _deviceId == null) return;
+    if (!_isInitialized || _deviceId == null || _deviceId!.isEmpty) {
+      debugPrint("⚠️ Dashboard logVisit: Service not initialized or deviceId is empty.");
+      return;
+    }
     
     if (Platform.isIOS) {
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 2));
     }
 
     try {
@@ -54,30 +57,34 @@ class DashboardService with WidgetsBindingObserver {
       final PackageInfo packageInfo = await PackageInfo.fromPlatform();
       final String appVersion = "${packageInfo.version} (Build ${packageInfo.buildNumber})";
 
-      final String userUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId?updateMask.fieldPaths=lastVisit&updateMask.fieldPaths=platform&updateMask.fieldPaths=appId&updateMask.fieldPaths=lastUpdate&updateMask.fieldPaths=appVersion";
+      // 1. ADIM: Kullanıcı Senkronizasyonu (Drinkly/Quitly tarzı - Eksik alanlar eklendi)
+      final String userUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId";
       
       await http.patch(
         Uri.parse(userUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "fields": {
-            "lastVisit": {"stringValue": date + " " + time},
+            "originalName": {"stringValue": ""}, // İsmi boş gönderiyoruz (Dashboard bekliyor olabilir)
+            "age": {"integerValue": "0"},         // Yaş bilgisini 0 gönderiyoruz
+            "lastVisit": {"stringValue": "$date $time"},
             "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
             "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
             "appId": {"stringValue": _appId},
             "appVersion": {"stringValue": appVersion},
           }
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
+      // 2. ADIM: Ziyaret Kaydı
       _currentVisitId = now.millisecondsSinceEpoch.toString();
       _sessionStartTime = now;
       _totalSecondsThisSession = 0;
 
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId";
+      final String visitUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId";
       
-      final response = await http.patch(
-        Uri.parse(url),
+      final visitResponse = await http.patch(
+        Uri.parse(visitUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "fields": {
@@ -92,11 +99,11 @@ class DashboardService with WidgetsBindingObserver {
         }),
       ).timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
+      if (visitResponse.statusCode == 200) {
         _startHeartbeat();
-        debugPrint("📊 Dashboard visit log success: $_currentVisitId");
+        debugPrint("📊 Dashboard visit log success: $_currentVisitId (Device: $_deviceId)");
       } else {
-        debugPrint("⚠️ Dashboard visit log ERROR ${response.statusCode}: ${response.body}");
+        debugPrint("⚠️ Dashboard VISIT record ERROR ${visitResponse.statusCode}: ${visitResponse.body}");
       }
     } catch (e) {
       debugPrint("⚠️ Dashboard logVisit EXCEPTION: $e");

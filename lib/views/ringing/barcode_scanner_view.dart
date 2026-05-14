@@ -6,6 +6,8 @@ import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
+import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 
 
 class BarcodeScannerView extends ConsumerStatefulWidget {
@@ -21,6 +23,15 @@ class BarcodeScannerView extends ConsumerStatefulWidget {
 class _BarcodeScannerViewState extends ConsumerState<BarcodeScannerView> {
   final MobileScannerController cameraController = MobileScannerController();
   bool _isFinished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // REKLAMI ÖNCEDEN YÜKLE
+    if (!ref.read(isPremiumProvider)) {
+      AdHelper.preloadInterstitialAd();
+    }
+  }
 
   Future<void> _finishTask() async {
     if (_isFinished) return;
@@ -42,6 +53,11 @@ class _BarcodeScannerViewState extends ConsumerState<BarcodeScannerView> {
       }
       
       if (mounted) {
+        // REKLAMI HEMEN GÖSTER
+        if (!ref.read(isPremiumProvider)) {
+          AdHelper.showInterstitialAd(context);
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SuccessView()),

@@ -1,4 +1,5 @@
 import 'package:alarm/alarm.dart';
+import 'package:cervusalarm/viewmodels/home_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -56,11 +57,26 @@ class AlarmApp extends ConsumerStatefulWidget {
 
 class _AddAlarmBottomSheetState {} // Unused but preventing delete
 
-class _AlarmAppState extends ConsumerState<AlarmApp> {
+class _AlarmAppState extends ConsumerState<AlarmApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupAlarmListener();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Uygulama ön plana geldiğinde (arka planda çalmış bitmiş) stale alarmları temizle
+      ref.read(homeViewModelProvider.notifier).checkStaleAlarms();
+    }
   }
 
   void _setupAlarmListener() {

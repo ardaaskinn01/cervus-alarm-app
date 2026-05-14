@@ -20,26 +20,26 @@ class RingingView extends ConsumerStatefulWidget {
   ConsumerState<RingingView> createState() => _RingingViewState();
 }
 
-class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProviderStateMixin {
+class _RingingViewState extends ConsumerState<RingingView> with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _bgPulseController;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _bgPulseAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-    
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    _bgPulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _bgPulseAnimation = Tween<double>(begin: 0.8, end: 1.5).animate(CurvedAnimation(parent: _bgPulseController, curve: Curves.slowMiddle));
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _bgPulseController.dispose();
     super.dispose();
   }
 
@@ -50,7 +50,6 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
       final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
       stopMethod = currentAlarm.stopMethod;
 
-      // Alarm çaldı → rewardUnlocked sıfırla (kilit bir kez çaldıktan sonra geri gelsin)
       if (currentAlarm.rewardUnlocked) {
         final updatedAlarm = currentAlarm.copyWith(rewardUnlocked: false);
         ref.read(homeViewModelProvider.notifier).silentEditAlarm(updatedAlarm);
@@ -72,18 +71,7 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
       nextView = PuzzleView(alarmId: widget.alarmId, isSnooze: isSnooze);
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => nextView),
-    );
-  }
-
-  void _onSnoozePressed(BuildContext context, WidgetRef ref) {
-    _navigateToStopTask(context, ref, true);
-  }
-
-  void _onWakeUpPressed(BuildContext context, WidgetRef ref) {
-    _navigateToStopTask(context, ref, false);
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextView));
   }
 
   @override
@@ -93,156 +81,143 @@ class _RingingViewState extends ConsumerState<RingingView> with SingleTickerProv
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.backgroundColor,
-                AppTheme.gradientEndColor,
-                AppTheme.backgroundColor,
-              ],
-              stops: [0.0, 0.65, 1.0],
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                const Spacer(),
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    final scale = _pulseAnimation.value;
-                    return Container(
-                      padding: const EdgeInsets.all(50),
+        body: Stack(
+          children: [
+            // DYNAMIC BG PULSE
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(color: AppTheme.backgroundColor),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  ScaleTransition(
+                    scale: _bgPulseAnimation,
+                    child: Container(
+                      width: 500,
+                      height: 500,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.secondaryColor.withOpacity(0.3 * (1.3 - scale)),
-                            blurRadius: 40 * scale,
-                            spreadRadius: 20 * scale,
-                          ),
-                          BoxShadow(
-                            color: AppTheme.primaryColor.withOpacity(0.2 * (1.3 - scale)),
-                            blurRadius: 80 * scale,
-                            spreadRadius: 40 * scale,
-                          ),
-                        ],
-                      ),
-                      child: Transform.scale(
-                        scale: scale,
-                        child: const Icon(
-                          Icons.notifications_active_rounded,
-                          size: 100,
-                          color: Colors.white,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppTheme.primaryColor.withOpacity(0.15),
+                            AppTheme.primaryColor.withOpacity(0.0),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 60),
-                Text(
-                  AppLocalizations.get('ringing_title', locale),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2.0,
-                    shadows: [
-                      Shadow(color: Colors.black45, offset: Offset(0, 4), blurRadius: 10),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Text(
-                    AppLocalizations.get('ringing_subtitle', locale),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height: 80,
+                ],
+              ),
+            ),
+
+            SafeArea(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  
+                  // ICON PULSE
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) {
+                      final scale = _pulseAnimation.value;
+                      return Container(
+                        padding: const EdgeInsets.all(50),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: const LinearGradient(
-                            colors: [Colors.greenAccent, Colors.green],
-                          ),
+                          shape: BoxShape.circle,
+                          color: AppTheme.primaryColor.withOpacity(0.1),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.green.withOpacity(0.3),
-                              blurRadius: 25,
-                              offset: const Offset(0, 10),
+                              color: AppTheme.secondaryColor.withOpacity(0.3 * (1.3 - scale)),
+                              blurRadius: 50 * scale,
+                              spreadRadius: 25 * scale,
                             ),
                           ],
                         ),
-                        child: ElevatedButton(
-                          onPressed: () => _onWakeUpPressed(context, ref),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                          ),
-                          child: Text(
-                            AppLocalizations.get('ringing_wakeup', locale),
-                            style: const TextStyle(
-                              fontSize: 22, 
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                          ),
+                        child: Transform.scale(
+                          scale: scale,
+                          child: const Icon(Icons.notifications_active_rounded, size: 120, color: Colors.white),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      TextButton(
-                        onPressed: () => _onSnoozePressed(context, ref),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white.withOpacity(0.5),
-                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.snooze, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              AppLocalizations.get('ringing_snooze', locale),
-                              style: const TextStyle(
-                                fontSize: 16, 
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ),
-              ],
+                  
+                  const SizedBox(height: 60),
+                  
+                  Text(
+                    AppLocalizations.get('ringing_title', locale),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: 2.0),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      AppLocalizations.get('ringing_subtitle', locale),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 18, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  
+                  const Spacer(),
+                  
+                  Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      children: [
+                        // WAKE UP BUTTON (Premium Gradient)
+                        GestureDetector(
+                          onTap: () => _navigateToStopTask(context, ref, false),
+                          child: Container(
+                            width: double.infinity,
+                            height: 84,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(28),
+                              gradient: const LinearGradient(colors: [Colors.greenAccent, Colors.green]),
+                              boxShadow: [
+                                BoxShadow(color: Colors.green.withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 12)),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              AppLocalizations.get('ringing_wakeup', locale).toUpperCase(),
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 28),
+                        
+                        TextButton(
+                          onPressed: () => _navigateToStopTask(context, ref, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white.withOpacity(0.5),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.snooze_rounded, size: 24),
+                              const SizedBox(width: 10),
+                              Text(
+                                AppLocalizations.get('ringing_snooze', locale),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
+

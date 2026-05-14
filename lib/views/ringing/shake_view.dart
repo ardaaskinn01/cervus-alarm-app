@@ -7,6 +7,8 @@ import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
+import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 import 'dart:math';
 
 class ShakeView extends ConsumerStatefulWidget {
@@ -31,6 +33,11 @@ class _ShakeViewState extends ConsumerState<ShakeView> {
   void initState() {
     super.initState();
     _startListening();
+    
+    // REKLAMI ÖNCEDEN YÜKLE
+    if (!ref.read(isPremiumProvider)) {
+      AdHelper.preloadInterstitialAd();
+    }
   }
 
   void _startListening() {
@@ -91,6 +98,11 @@ class _ShakeViewState extends ConsumerState<ShakeView> {
       }
       
       if (mounted) {
+        // REKLAMI HEMEN GÖSTER
+        if (!ref.read(isPremiumProvider)) {
+          AdHelper.showInterstitialAd(context);
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SuccessView()),

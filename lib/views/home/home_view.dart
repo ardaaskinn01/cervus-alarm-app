@@ -8,6 +8,7 @@ import 'add_alarm_bottom_sheet.dart';
 import '../settings/settings_view.dart';
 import '../../core/app_localizations.dart';
 import '../components/banner_ad_widget.dart';
+import 'package:flutter/cupertino.dart';
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
@@ -171,100 +172,167 @@ class HomeView extends ConsumerWidget {
     }
   }
 
-  class AlarmCard extends ConsumerWidget {
-    final AlarmModel alarm;
-    final String timeStr;
-    final String locale;
+class AlarmCard extends ConsumerWidget {
+  final AlarmModel alarm;
+  final String timeStr;
+  final String locale;
 
-    const AlarmCard({
-      Key? key,
-      required this.alarm,
-      required this.timeStr,
-      required this.locale,
-    }) : super(key: key);
+  const AlarmCard({
+    Key? key,
+    required this.alarm,
+    required this.timeStr,
+    required this.locale,
+  }) : super(key: key);
 
-    String _formatDays(List<int> days) {
-      if (days.isEmpty) return AppLocalizations.get('home_card_once', locale);
-      if (days.length == 7) return AppLocalizations.get('home_card_everyday', locale);
-      
-      return days.map((d) => AppLocalizations.get('day_${d-1}', locale)).join(', ');
+  String _formatDays(List<int> days) {
+    if (days.isEmpty) return AppLocalizations.get('home_card_once', locale);
+    if (days.length == 7) return AppLocalizations.get('home_card_everyday', locale);
+    
+    return days.map((d) => AppLocalizations.get('day_${d-1}', locale)).join(', ');
+  }
+
+  String _getTimeUntil() {
+    final now = DateTime.now();
+    DateTime alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
+    
+    if (alarmTime.isBefore(now)) {
+      alarmTime = alarmTime.add(const Duration(days: 1));
     }
+    
+    final diff = alarmTime.difference(now);
+    final hours = diff.inHours;
+    final minutes = diff.inMinutes % 60;
+    
+    if (locale == 'tr') {
+      return '$hours sa $minutes dk sonra çalacak';
+    }
+    return 'Rings in $hours h $minutes m';
+  }
 
-    @override
-    Widget build(BuildContext context, WidgetRef ref) {
-      return Container(
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          color: Colors.white.withOpacity(alarm.isActive ? 0.05 : 0.02),
-          border: Border.all(color: Colors.white.withOpacity(alarm.isActive ? 0.15 : 0.05), width: 1.5),
-          boxShadow: alarm.isActive
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
-                    blurRadius: 25,
-                    spreadRadius: 2,
-                  )
-                ]
-              : [],
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (alarm.label.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6.0),
-                        child: Text(
-                          alarm.label,
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool isActive = alarm.isActive;
+    
+    // Pasif durum için şık bir lacivert/mor tonu
+    final Color cardBg = isActive 
+        ? Colors.white.withOpacity(0.08) 
+        : const Color(0xFF1E1E2E).withOpacity(0.4);
+    
+    final Color borderColor = isActive 
+        ? AppTheme.primaryColor.withOpacity(0.5) 
+        : Colors.white.withOpacity(0.05);
+
+    return Container(
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: cardBg,
+        border: Border.all(color: borderColor, width: 1.5),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.25),
+                  blurRadius: 20,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [],
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (alarm.label.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Text(
+                              alarm.label.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isActive ? AppTheme.secondaryColor : Colors.white30,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        Text(
+                          timeStr,
                           style: TextStyle(
-                            fontSize: 15,
-                            color: alarm.isActive ? Colors.white70 : Colors.white30,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.1,
+                            fontSize: 52,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                            color: isActive ? Colors.white : Colors.white24,
+                            height: 1.0,
                           ),
                         ),
-                      ),
-                    Text(
-                      timeStr,
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                        color: alarm.isActive ? Colors.white : Colors.white24,
-                        shadows: alarm.isActive ? [
-                          Shadow(color: Colors.white.withOpacity(0.3), blurRadius: 10)
-                        ] : [],
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _formatDays(alarm.repeatDays),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: alarm.isActive ? AppTheme.secondaryColor : Colors.white24,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.1,
-                      ),
+                  ),
+                  CupertinoSwitch(
+                    value: isActive,
+                    activeColor: AppTheme.primaryColor,
+                    trackColor: Colors.white.withOpacity(0.1),
+                    onChanged: (val) {
+                      ref.read(homeViewModelProvider.notifier).toggleAlarm(alarm, val);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatDays(alarm.repeatDays),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isActive ? Colors.white70 : Colors.white30,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (isActive)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              _getTimeUntil(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.primaryColor.withOpacity(0.9),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-                Switch(
-                  value: alarm.isActive,
-                  onChanged: (val) {
-                    ref.read(homeViewModelProvider.notifier).toggleAlarm(alarm, val);
-                  },
-                ),
-              ],
-            ),
+                  ),
+                  if (isActive)
+                    Icon(
+                      alarm.stopMethod == 'math' ? Icons.calculate_outlined : Icons.extension_outlined,
+                      size: 20,
+                      color: Colors.white30,
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
   }
+}

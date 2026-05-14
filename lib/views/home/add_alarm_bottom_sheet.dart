@@ -199,75 +199,68 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final isPremium = ref.watch(isPremiumProvider);
-    // Yöntemler kilitli mi? Premium yoksa VE bu oturumda reklam ödülü de kazanılmadıysa kilitli
     final methodsUnlocked = isPremium || _rewardUnlockedThisSession;
 
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.cardColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
         ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Sayfa Tutamacı
                 Container(
-                  width: 40,
+                  width: 45,
                   height: 5,
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: Colors.white10,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+                
+                // Başlık
                 Text(
                   widget.existingAlarm != null ? AppLocalizations.get('add_edit_title', locale) : AppLocalizations.get('add_new_title', locale),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5),
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
+                const SizedBox(height: 12),
+                
+                // Zaman Seçici
+                Container(
                   height: 180,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: CupertinoTheme(
                     data: const CupertinoThemeData(
                       brightness: Brightness.dark,
                       textTheme: CupertinoTextThemeData(
-                        dateTimePickerTextStyle: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        dateTimePickerTextStyle: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
                       ),
                     ),
                     child: CupertinoDatePicker(
                       mode: CupertinoDatePickerMode.time,
                       use24hFormat: true,
                       initialDateTime: selectedTime,
-                      onDateTimeChanged: (DateTime newTime) {
-                        setState(() {
-                          selectedTime = newTime;
-                        });
-                      },
+                      onDateTimeChanged: (DateTime newTime) => setState(() => selectedTime = newTime),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    AppLocalizations.get('add_label', locale),
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                ),
+                
+                const SizedBox(height: 28),
+
+                // Alarm Etiketi
+                _buildSectionHeader(AppLocalizations.get('add_label', locale)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: labelController,
@@ -276,89 +269,69 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                     hintText: widget.existingAlarm != null ? '' : AppLocalizations.get('home_title', locale),
                     hintStyle: const TextStyle(color: Colors.white24),
                     filled: true,
-                    fillColor: Colors.white12,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    fillColor: Colors.white.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   ),
                 ),
-                const SizedBox(height: 24),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    AppLocalizations.get('add_repeat', locale),
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                ),
+
+                const SizedBox(height: 28),
+
+                // Tekrarlama (Haftalık Hücreler)
+                _buildSectionHeader(AppLocalizations.get('add_repeat', locale)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    for (var i = 1; i <= 7; i++)
-                      GestureDetector(
-                        onTap: () => toggleDay(i),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: selectedDays.contains(i)
-                                ? AppTheme.secondaryColor
-                                : Colors.white12,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            AppLocalizations.get('day_${i-1}', locale),
-                            style: TextStyle(
-                              color: selectedDays.contains(i)
-                                  ? Colors.white
-                                  : Colors.white54,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  children: List.generate(7, (index) {
+                    final day = index + 1;
+                    final isSelected = selectedDays.contains(day);
+                    return GestureDetector(
+                      onTap: () => toggleDay(day),
+                      child: Container(
+                        width: (MediaQuery.of(context).size.width - 76) / 7,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppTheme.primaryColor : Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: isSelected ? Colors.white24 : Colors.transparent),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          AppLocalizations.get('day_$index', locale),
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white38,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
                         ),
-                      )
-                  ],
+                      ),
+                    );
+                  }),
                 ),
-                const SizedBox(height: 24),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    AppLocalizations.get('add_melody', locale),
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                ),
+
+                const SizedBox(height: 28),
+
+                // Melodi Seçimi (Carousel)
+                _buildSectionHeader(AppLocalizations.get('add_melody', locale)),
                 const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+                SizedBox(
+                  height: 60,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
                     children: [
-                      _melodyChip(AppLocalizations.get('melody_hard', locale), 'assets/audio/hard_alarm.mp3', false),
-                      const SizedBox(width: 8),
-                      _melodyChip(AppLocalizations.get('melody_soft', locale), 'assets/audio/soft_alarm.mp3', false),
-                      const SizedBox(width: 8),
-                      _melodyChip(AppLocalizations.get('melody_modern', locale), 'assets/audio/modern_alarm.mp3', false),
-                      ..._customSounds.map((s) {
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: _melodyChip(s['name'] ?? AppLocalizations.get('melody_custom', locale), s['path'] ?? '', true),
-                        );
-                      }).toList(),
+                      _melodyItem(AppLocalizations.get('melody_hard', locale), 'assets/audio/hard_alarm.mp3', Icons.volume_up, false),
+                      _melodyItem(AppLocalizations.get('melody_soft', locale), 'assets/audio/soft_alarm.mp3', Icons.notifications_active_outlined, false),
+                      _melodyItem(AppLocalizations.get('melody_modern', locale), 'assets/audio/modern_alarm.mp3', Icons.music_note_outlined, false),
+                      ..._customSounds.map((s) => _melodyItem(s['name'] ?? '', s['path'] ?? '', Icons.my_library_music_outlined, true)),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    AppLocalizations.get('add_stop_method', locale),
-                    style: const TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                ),
+
+                const SizedBox(height: 28),
+
+                // Durdurma Yöntemi (Tek Sıra)
+                _buildSectionHeader(AppLocalizations.get('add_stop_method', locale)),
                 const SizedBox(height: 12),
-                // Stop methods — matematik her zaman açık, diğerleri kilitli veya açık
                 SizedBox(
                   height: 48,
                   child: ListView(
@@ -372,22 +345,129 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                     ],
                   ),
                 ),
-                // Kilitli ise "Bir Kez Dene" butonu
+
                 if (!methodsUnlocked) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   _buildTryOnceButton(),
                 ],
-                const SizedBox(height: 32),
+
+                const SizedBox(height: 40),
+
+                // Kaydet Butonu (Premium Look)
                 SizedBox(
                   width: double.infinity,
+                  height: 60,
                   child: ElevatedButton(
                     onPressed: saveAlarm,
-                    child: Text(AppLocalizations.get('add_save', locale)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.secondaryColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 8,
+                      shadowColor: AppTheme.secondaryColor.withOpacity(0.5),
+                    ),
+                    child: Text(
+                      AppLocalizations.get('add_save', locale).toUpperCase(),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+      ),
+    );
+  }
+
+  Widget _melodyItem(String label, String path, IconData icon, bool isCustom) {
+    final bool isSelected = selectedSound == path;
+    return GestureDetector(
+      onTap: () async {
+        setState(() => selectedSound = path);
+        try {
+          await FlutterRingtonePlayer().stop();
+          await _audioPlayer.stop();
+          if (isCustom) {
+            await _audioPlayer.play(DeviceFileSource(path));
+          } else {
+            await FlutterRingtonePlayer().play(fromAsset: path, looping: false, volume: 0.8);
+          }
+        } catch (e) {
+          debugPrint("Ses çalınamadı: $e");
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? Colors.white30 : Colors.transparent),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : Colors.white24, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(color: isSelected ? Colors.white : Colors.white54, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _methodChip(String label, String value, bool isUnlocked) {
+    final isSelected = selectedStopMethod == value;
+    final bool showProBadge = !isUnlocked && value != 'math';
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: GestureDetector(
+        onTap: () {
+          if (!isUnlocked && value != 'math') {
+            _showPremiumLock(context);
+            return;
+          }
+          setState(() => selectedStopMethod = value);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryColor : Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? Colors.white24 : (showProBadge ? Colors.amber.withOpacity(0.3) : Colors.transparent),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : (showProBadge ? Colors.white38 : Colors.white60),
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
+                ),
+              ),
+              if (showProBadge) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.workspace_premium_rounded, size: 14, color: Colors.amber),
+              ],
+            ],
           ),
         ),
       ),
@@ -397,127 +477,25 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
   Widget _buildTryOnceButton() {
     final locale = ref.read(localeProvider);
     return GestureDetector(
-
       onTap: _isLoadingAd ? null : _showRewardedAd,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.07),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.amber.withOpacity(0.4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.lock_rounded, size: 18, color: Colors.amber),
-            const SizedBox(width: 8),
-                  _isLoadingAd
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber))
-                : Text(
-                    AppLocalizations.get('reward_try_once', locale),
-                    style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-            const SizedBox(width: 4),
-            Text(
-              AppLocalizations.get('reward_try_once_desc', locale),
-              style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _melodyChip(String label, String path, bool isCustom) {
-    final bool isSelected = selectedSound == path;
-    return GestureDetector(
-      onTap: () async {
-        setState(() {
-          selectedSound = path;
-        });
-        try {
-          await FlutterRingtonePlayer().stop();
-          await _audioPlayer.stop();
-
-          if (isCustom) {
-            await _audioPlayer.play(DeviceFileSource(path));
-          } else {
-            await FlutterRingtonePlayer().play(
-              fromAsset: path,
-              looping: false,
-              volume: 0.8,
-            );
-          }
-        } catch (e) {
-          debugPrint("Ses çalınamadı: $e");
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.secondaryColor : Colors.white12,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.white24 : Colors.transparent,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white54,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _methodChip(String label, String value, bool isUnlocked) {
-    final bool isSelected = selectedStopMethod == value;
-    final bool isMath = value == 'math';
-    final bool showProBadge = !isUnlocked && !isMath;
-
-    return GestureDetector(
-      onTap: () {
-        if (!isUnlocked) {
-          // Kilitli — tıklamayı engelle (buton zaten açıklamayı sağlıyor)
-          return;
-        }
-        setState(() {
-          selectedStopMethod = value;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? AppTheme.primaryColor 
-              : (showProBadge ? Colors.white.withOpacity(0.03) : Colors.white12),
+          color: Colors.amber.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected 
-                ? Colors.white24 
-                : (showProBadge ? Colors.amber.withOpacity(0.3) : Colors.transparent),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.amber.withOpacity(0.3)),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected 
-                    ? Colors.white 
-                    : (showProBadge ? Colors.white.withOpacity(0.4) : Colors.white70),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            if (showProBadge) ...[
-              const SizedBox(width: 6),
-              const Icon(Icons.workspace_premium_rounded, size: 14, color: Colors.amber),
-            ],
+            const Icon(Icons.play_circle_filled_rounded, size: 20, color: Colors.amber),
+            const SizedBox(width: 8),
+            _isLoadingAd
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber))
+              : Text(
+                  "${AppLocalizations.get('reward_try_once', locale)} ${AppLocalizations.get('reward_try_once_desc', locale)}",
+                  style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
           ],
         ),
       ),

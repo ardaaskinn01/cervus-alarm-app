@@ -1,7 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -15,10 +15,12 @@ class SuccessView extends ConsumerStatefulWidget {
   ConsumerState<SuccessView> createState() => _SuccessViewState();
 }
 
-class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProviderStateMixin {
+class _SuccessViewState extends ConsumerState<SuccessView> with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
+  late Animation<double> _pulseAnimation;
+  
 
   final List<String> _quotesTr = [
     "Dün dündü, bugün yeni bir gün. Harika bir başlangıç yap!",
@@ -51,7 +53,6 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
     "Determine the 1 most important thing you need to do today.",
     "Close your eyes for 1 minute and listen to the silence.",
   ];
-
   late String _todaysQuote;
   late String _todaysTask;
   InterstitialAd? _interstitialAd;
@@ -59,79 +60,24 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    // Quote and task are selected once here so they don't randomly flip on rebuild
-    // But they will be locale-dependent when used in the build method.
     final randQuoteIndex = Random().nextInt(_quotesTr.length);
     final randTaskIndex = Random().nextInt(_tasksTr.length);
-    
-    _todaysQuote = randQuoteIndex.toString(); // store index
-    _todaysTask = randTaskIndex.toString(); // store index
+    _todaysQuote = randQuoteIndex.toString();
+    _todaysTask = randTaskIndex.toString();
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
     _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0, curve: Curves.easeIn)),
-    );
+
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
 
     _controller.forward();
-    
-    // Premium kontrolü: Sadece premium değilse VE soğuma süresi geçmişse reklam yükle ve GÖSTER
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final isPremium = ref.read(isPremiumProvider);
-      if (!isPremium && AdHelper.canShowInterstitial) {
-        _loadInterstitialAd(showImmediately: true);
-      }
-    });
-  }
-
-  void _loadInterstitialAd({bool showImmediately = false}) {
-    InterstitialAd.load(
-      adUnitId: AdHelper.interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          debugPrint('InterstitialAd loaded.');
-          _interstitialAd = ad;
-          if (showImmediately) {
-            _showInterstitialAdInline();
-          }
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          debugPrint('InterstitialAd failed to load: $error');
-          _interstitialAd = null;
-        },
-      ),
-    );
-  }
-
-  void _showInterstitialAdInline() {
-    if (_interstitialAd == null) return;
-
-    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        AdHelper.recordAdShown();
-        ad.dispose();
-      },
-      onAdFailedToShowFullScreenContent: (ad, err) {
-        ad.dispose();
-      },
-    );
-
-    _interstitialAd!.show();
-    _interstitialAd = null;
-  }
-
-  void _showInterstitialAdAndReturn() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _pulseController.dispose();
     _interstitialAd?.dispose();
     super.dispose();
   }
@@ -139,181 +85,153 @@ class _SuccessViewState extends ConsumerState<SuccessView> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
-    final int quoteIdx = int.parse(_todaysQuote);
-    final int taskIdx = int.parse(_todaysTask);
-    
-    final currentQuote = locale == 'en' ? _quotesEn[quoteIdx] : _quotesTr[quoteIdx];
-    final currentTask = locale == 'en' ? _tasksEn[taskIdx] : _tasksTr[taskIdx];
-
-    // Determine greeting based on current hour
-    final hour = DateTime.now().hour;
-    String greetingKey;
-    if (hour >= 6 && hour < 12) {
-      greetingKey = 'success_morning';
-    } else if (hour >= 12 && hour < 18) {
-      greetingKey = 'success_afternoon';
-    } else if (hour >= 18 && hour < 24) {
-      greetingKey = 'success_evening';
-    } else {
-      greetingKey = 'success_night';
-    }
+    final isTr = locale == 'tr';
+    final quote = isTr ? _quotesTr[int.parse(_todaysQuote)] : _quotesEn[int.parse(_todaysQuote)];
+    final task = isTr ? _tasksTr[int.parse(_todaysTask)] : _tasksEn[int.parse(_todaysTask)];
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.backgroundColor,
-              AppTheme.gradientEndColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: Container(
-                  padding: const EdgeInsets.all(40),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.2),
-                        blurRadius: 40,
-                        spreadRadius: 20,
-                      )
-                    ]
-                  ),
-                  child: const Icon(
-                    Icons.wb_sunny_rounded,
-                    size: 120,
-                    color: AppTheme.secondaryColor,
+      body: Stack(
+        children: [
+          // BACKGROUND PULSE
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(color: AppTheme.backgroundColor),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                ScaleTransition(
+                  scale: _pulseAnimation,
+                  child: Container(
+                    width: 400,
+                    height: 400,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          AppTheme.primaryColor.withOpacity(0.12),
+                          AppTheme.primaryColor.withOpacity(0.0),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 60),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Column(
-                  children: [
-                    Text(
-                      AppLocalizations.get(greetingKey, locale),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        currentQuote,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          height: 1.5,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    // Today's Positive Task
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 32),
-                      padding: const EdgeInsets.all(20),
+              ],
+            ),
+          ),
+
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: Container(
+                      padding: const EdgeInsets.all(30),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        shape: BoxShape.circle,
+                        color: AppTheme.secondaryColor.withOpacity(0.1),
+                        border: Border.all(color: AppTheme.secondaryColor.withOpacity(0.2), width: 2),
                       ),
-                      child: Column(
+                      child: const Icon(Icons.wb_sunny_rounded, size: 80, color: AppTheme.secondaryColor),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  Text(
+                    AppLocalizations.get('success_title', locale),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1),
+                  ),
+                  
+                  const SizedBox(height: 48),
+
+                  // GLASS CARD: QUOTE
+                  _buildGlassCard(
+                    icon: Icons.format_quote_rounded,
+                    title: AppLocalizations.get('success_quote_title', locale),
+                    content: quote,
+                    color: AppTheme.primaryColor,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // GLASS CARD: TASK
+                  _buildGlassCard(
+                    icon: Icons.rocket_launch_rounded,
+                    title: AppLocalizations.get('success_task_title', locale),
+                    content: task,
+                    color: AppTheme.secondaryColor,
+                  ),
+
+                  const Spacer(),
+
+                  // ANA BUTON: GÜNE BAŞLA
+                  SizedBox(
+                    width: double.infinity,
+                    height: 68,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                        elevation: 10,
+                        shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+                      ),
+                      onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.task_alt_rounded, color: AppTheme.secondaryColor, size: 16),
-                              const SizedBox(width: 8),
-                              Text(
-                                AppLocalizations.get('success_task_title', locale),
-                                style: TextStyle(
-                                  color: AppTheme.secondaryColor.withOpacity(0.8),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 2.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
+                          const SizedBox(width: 12),
                           Text(
-                            currentTask,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            AppLocalizations.get('success_start', locale).toUpperCase(),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.white),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Container(
-                    width: double.infinity,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: const LinearGradient(
-                        colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _showInterstitialAdAndReturn,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: Text(
-                        AppLocalizations.get('success_start', locale),
-                        style: const TextStyle(
-                          fontSize: 20, 
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                   ),
-                ),
+                  
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassCard({required IconData icon, required String title, required String content, required Color color}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(26),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: color, size: 20),
+                  const SizedBox(width: 10),
+                  Text(title, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                content,
+                style: const TextStyle(color: Colors.white, fontSize: 18, height: 1.5, fontWeight: FontWeight.w500),
               ),
             ],
           ),

@@ -6,6 +6,8 @@ import '../../core/app_localizations.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
+import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 
 class TypingView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -47,6 +49,10 @@ class _TypingViewState extends ConsumerState<TypingView> {
   @override
   void initState() {
     super.initState();
+    // REKLAMI ÖNCEDEN YÜKLE
+    if (!ref.read(isPremiumProvider)) {
+      AdHelper.preloadInterstitialAd();
+    }
   }
 
   @override
@@ -95,6 +101,11 @@ class _TypingViewState extends ConsumerState<TypingView> {
       }
       
       if (mounted) {
+        // REKLAMI HEMEN GÖSTER
+        if (!ref.read(isPremiumProvider)) {
+          AdHelper.showInterstitialAd(context);
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SuccessView()),

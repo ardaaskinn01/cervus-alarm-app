@@ -5,6 +5,8 @@ import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
+import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 import 'dart:math';
 
 class MemoryView extends ConsumerStatefulWidget {
@@ -31,6 +33,10 @@ class _MemoryViewState extends ConsumerState<MemoryView> {
   void initState() {
     super.initState();
     _initGame();
+    // REKLAMI ÖNCEDEN YÜKLE
+    if (!ref.read(isPremiumProvider)) {
+      AdHelper.preloadInterstitialAd();
+    }
   }
 
   void _initGame() {
@@ -96,6 +102,11 @@ class _MemoryViewState extends ConsumerState<MemoryView> {
       }
       
       if (mounted) {
+        // REKLAMI HEMEN GÖSTER
+        if (!ref.read(isPremiumProvider)) {
+          AdHelper.showInterstitialAd(context);
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const SuccessView()),

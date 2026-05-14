@@ -8,6 +8,8 @@ import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../../services/local_storage_service.dart';
 import '../home/success_view.dart';
+import '../../core/ad_helper.dart';
+import '../../services/revenuecat_service.dart';
 
 class PuzzleView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -45,6 +47,11 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
     _mathDifficulty = storage.getMathDifficulty();
     _customQuestions = storage.getCustomQuestions();
     _generatePuzzle();
+    
+    // REKLAMI ÖNCEDEN YÜKLE
+    if (!ref.read(isPremiumProvider)) {
+      AdHelper.preloadInterstitialAd();
+    }
   }
 
   void _generatePuzzle() {
@@ -119,6 +126,11 @@ class _PuzzleViewState extends ConsumerState<PuzzleView> {
           }
 
           if (mounted) {
+            // REKLAMI HEMEN GÖSTER
+            if (!ref.read(isPremiumProvider)) {
+              AdHelper.showInterstitialAd(context);
+            }
+
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const SuccessView()),
