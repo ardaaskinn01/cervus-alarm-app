@@ -254,14 +254,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       }
 
       await Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
-      await RevenueCatService.init(ref);
 
       if (Platform.isIOS) {
         final status = await AppTrackingTransparency.trackingAuthorizationStatus;
         if (status == TrackingStatus.notDetermined) {
           await AppTrackingTransparency.requestTrackingAuthorization();
         }
+        // Drinkly Stili: İzin sonrası iOS'a 500ms nefes payı ver
+        await Future.delayed(const Duration(milliseconds: 500));
       }
+
+      await RevenueCatService.init(ref);
 
       final String installationId = await storageService.getInstallationId();
       await DashboardService().init(installationId);
