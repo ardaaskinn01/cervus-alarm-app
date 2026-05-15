@@ -120,12 +120,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
 
                     // Hata veya veri yoksa kullanıcı dostu mesaj göster — asla crash yok
                     if (snapshot.hasError || snapshot.data == null) {
+                      final errorMsg = snapshot.hasError ? snapshot.error.toString() : (isTr ? "Paket bulunamadı" : "No offerings found");
                       return Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          isTr ? "Paketler yüklenemedi. İnternet bağlantınızı kontrol edin." : "Packages could not be loaded. Please check your internet connection.",
+                          "${isTr ? "Hata:" : "Error:"} $errorMsg",
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white54),
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 13),
                         ),
                       );
                     }
@@ -140,9 +141,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                       );
                     }
                     
-                    final monthly = packages.where((p) => p.packageType == PackageType.monthly).firstOrNull ?? packages.where((p) => p.identifier.contains('monthly')).firstOrNull;
-                    final yearly = packages.where((p) => p.packageType == PackageType.annual).firstOrNull ?? packages.where((p) => p.identifier.contains('yearly')).firstOrNull;
-                    final lifetime = packages.where((p) => p.packageType == PackageType.lifetime).firstOrNull ?? packages.where((p) => p.identifier.contains('lifetime') || p.identifier.contains('pro')).firstOrNull;
+                    final monthly = packages.where((p) => p.packageType == PackageType.monthly).firstOrNull ?? 
+                                   packages.where((p) => p.identifier.toLowerCase().contains('monthly')).firstOrNull;
+                    final yearly = packages.where((p) => p.packageType == PackageType.annual).firstOrNull ?? 
+                                  packages.where((p) => p.identifier.toLowerCase().contains('year') || p.identifier.toLowerCase().contains('ann')).firstOrNull;
+                    final lifetime = packages.where((p) => p.packageType == PackageType.lifetime).firstOrNull ?? 
+                                    packages.where((p) => p.identifier.toLowerCase().contains('life') || p.identifier.toLowerCase().contains('pro')).firstOrNull;
 
                     return Column(
                       children: [

@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-import '../core/navigator_key.dart';
 
 class DashboardService with WidgetsBindingObserver {
   static final DashboardService _instance = DashboardService._internal();
@@ -12,6 +11,8 @@ class DashboardService with WidgetsBindingObserver {
   DashboardService._internal();
 
   final String _projectId = "dashboard-baf3f";
+  // Drinkly projesinden alınan ve çalışan API Key
+  final String _apiKey = "AIzaSyBPOS5L2Qdoi0kVXgyQnCoWuAdbUfh_YAo";
   final String _appId = "alarmly";
 
   bool _isInitialized = false;
@@ -40,13 +41,10 @@ class DashboardService with WidgetsBindingObserver {
   }
 
   Future<void> logVisit() async {
-    if (!_isInitialized || _deviceId == null || _deviceId!.isEmpty) {
-      debugPrint("⚠️ Dashboard logVisit: Service not initialized or deviceId is empty.");
-      return;
-    }
+    if (!_isInitialized || _deviceId == null || _deviceId!.isEmpty) return;
     
     if (Platform.isIOS) {
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 3));
     }
 
     try {
@@ -55,58 +53,75 @@ class DashboardService with WidgetsBindingObserver {
       final String time = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
       
       final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      final String appVersion = "${packageInfo.version} (Build ${packageInfo.buildNumber})";
+      final String appVersion = "${packageInfo.version}+${packageInfo.buildNumber}";
 
-      // 1. ADIM: Kullanıcı Senkronizasyonu (Drinkly/Quitly tarzı - Eksik alanlar eklendi)
-      final String userUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId";
+      // 1. ADIM: Kullanıcı Senkronizasyonu (Drinkly Stili: API Key + Headers)
+      final String userUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId?key=$_apiKey";
       
-      await http.patch(
-        Uri.parse(userUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "fields": {
-            "originalName": {"stringValue": ""}, // İsmi boş gönderiyoruz (Dashboard bekliyor olabilir)
-            "age": {"integerValue": "0"},         // Yaş bilgisini 0 gönderiyoruz
-            "lastVisit": {"stringValue": "$date $time"},
-            "lastUpdate": {"timestampValue": now.toUtc().toIso8601String()},
-            "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
-            "appId": {"stringValue": _appId},
-            "appVersion": {"stringValue": appVersion},
-          }
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final getResponse = await http.get(Uri.parse(userUrl)).timeout(const Duration(seconds: 5));
+
+      if (getResponse.statusCode == 404) {
+        await http.patch(
+          Uri.parse(userUrl),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "fields": {
+              "originalName": {"stringValue": ""},
+              "age": {"stringValue": "0"}, 
+              "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
+              "appId": {"stringValue": _appId},
+              "createdAt": {"timestampValue": now.toUtc().toIso8601String()},
+              "lastVisit": {"stringValue": "$date $time"},
+              "appVersion": {"stringValue": appVersion},
+            }
+          }),
+        );
+      } else {
+        final String updateUrl = "$userUrl&updateMask.fieldPaths=lastVisit&updateMask.fieldPaths=appVersion&updateMask.fieldPaths=platform";
+        await http.patch(
+          Uri.parse(updateUrl),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "fields": {
+              "lastVisit": {"stringValue": "$date $time"},
+              "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
+              "appVersion": {"stringValue": appVersion},
+            }
+          }),
+        );
+      }
 
       // 2. ADIM: Ziyaret Kaydı
-      _currentVisitId = now.millisecondsSinceEpoch.toString();
+      _currentVisitId = "${date}_${time.replaceAll(':', '-')}";
       _sessionStartTime = now;
       _totalSecondsThisSession = 0;
 
-      final String visitUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId";
+      final String visitUrl = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey";
       
       final visitResponse = await http.patch(
         Uri.parse(visitUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "fields": {
-            'date': {'stringValue': date},
-            'time': {'stringValue': time},
-            'platform': {'stringValue': Platform.isIOS ? 'iOS' : 'Android'},
-            'appId': {'stringValue': _appId},
-            'appVersion': {'stringValue': appVersion},
-            'timestamp': {'timestampValue': now.toUtc().toIso8601String()},
-            'durationSeconds': {'integerValue': '0'},
+            "date": {"stringValue": date},
+            "time": {"stringValue": time},
+            "platform": {"stringValue": Platform.isIOS ? 'iOS' : 'Android'},
+            "appId": {"stringValue": _appId},
+            "appVersion": {"stringValue": appVersion},
+            "timestamp": {"timestampValue": now.toUtc().toIso8601String()},
+            "durationSeconds": {"integerValue": "0"},
           }
         }),
-      ).timeout(const Duration(seconds: 10));
+      );
 
-      if (visitResponse.statusCode == 200) {
+      if (visitResponse.statusCode == 200 || visitResponse.statusCode == 201) {
         _startHeartbeat();
-        debugPrint("📊 Dashboard visit log success: $_currentVisitId (Device: $_deviceId)");
+        debugPrint("📊 Dashboard visit log success: $_currentVisitId");
       } else {
-        debugPrint("⚠️ Dashboard VISIT record ERROR ${visitResponse.statusCode}: ${visitResponse.body}");
+        debugPrint("📊 Dashboard ERROR: ${visitResponse.statusCode} - ${visitResponse.body}");
       }
     } catch (e) {
-      debugPrint("⚠️ Dashboard logVisit EXCEPTION: $e");
+      debugPrint("📊 Dashboard EXCEPTION: $e");
     }
   }
 
@@ -124,7 +139,7 @@ class DashboardService with WidgetsBindingObserver {
     _sessionStartTime = now;
 
     try {
-      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
+      final String url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/users/$_deviceId/visits/$_currentVisitId?key=$_apiKey&updateMask.fieldPaths=durationSeconds&updateMask.fieldPaths=lastUpdate";
       
       final response = await http.patch(
         Uri.parse(url),
@@ -138,26 +153,26 @@ class DashboardService with WidgetsBindingObserver {
       );
 
       if (response.statusCode != 200) {
-        debugPrint("⚠️ Dashboard updateDuration ERROR ${response.statusCode}: ${response.body}");
+        debugPrint("📊 Dashboard updateDuration ERROR ${response.statusCode}: ${response.body}");
       }
     } catch (e) {
-      debugPrint("⚠️ Dashboard _updateDuration EXCEPTION: $e");
+      debugPrint("📊 Dashboard _updateDuration EXCEPTION: $e");
     }
   }
 
   Future<Map<String, dynamic>?> getVersionConfig() async {
     try {
-      final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config";
+      final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config?key=$_apiKey";
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return _simplifyFields(data['fields']);
       } else {
-        debugPrint("⚠️ Dashboard getVersionConfig ERROR ${response.statusCode}: ${response.body}");
+        debugPrint("📊 Dashboard getVersionConfig ERROR ${response.statusCode}: ${response.body}");
       }
     } catch (e) {
-      debugPrint("⚠️ Dashboard getVersionConfig EXCEPTION: $e");
+      debugPrint("📊 Dashboard getVersionConfig EXCEPTION: $e");
     }
     return null;
   }
