@@ -36,7 +36,18 @@ void main() async {
   await Hive.openBox<AlarmModel>('alarmsBox');
   await Hive.openBox('settingsBox');
 
+  // iOS'ta ATT'yi EN BAŞTA sor
+  if (Platform.isIOS) {
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+    if (status == TrackingStatus.notDetermined) {
+      await AppTrackingTransparency.requestTrackingAuthorization();
+    }
+    // Drinkly Stili: İzin sonrası iOS'a 500ms nefes payı ver
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
   runApp(
+
     const ProviderScope(
       child: AlarmApp(),
     ),
@@ -165,6 +176,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     final locale = storageService.getLanguage();
 
     try {
+      await Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
+      await RevenueCatService.init(ref);
+
+      final String installationId = await storageService.getInstallationId();
+      await DashboardService().init(installationId);
+      
+      // FIRE AND FORGET! await olmadan hızlıca gönder
+      DashboardService().logVisit();
+      
+      await MobileAds.instance.initialize();
+      ref.read(localeProvider.notifier).setLocaleSync(storageService.getLanguage());
+
       await ref.read(alarmServiceProvider).init();
       final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       
@@ -252,31 +275,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
           ),
         );
       }
-
-      await Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
-
-      if (Platform.isIOS) {
-        final status = await AppTrackingTransparency.trackingAuthorizationStatus;
-        if (status == TrackingStatus.notDetermined) {
-          await AppTrackingTransparency.requestTrackingAuthorization();
-        }
-        // Drinkly Stili: İzin sonrası iOS'a 500ms nefes payı ver
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
-      await RevenueCatService.init(ref);
-
-      final String installationId = await storageService.getInstallationId();
-      await DashboardService().init(installationId);
-      
-      if (Platform.isIOS) {
-        await DashboardService().logVisit();
-      } else {
-        DashboardService().logVisit();
-      }
-      
-      await MobileAds.instance.initialize();
-      ref.read(localeProvider.notifier).setLocaleSync(storageService.getLanguage());
 
       // 🎯 MİNİMUM SPLASH SÜRESİNİ 3.5 SANİYEYE ÇIKARDIK
       final elapsedTime = DateTime.now().difference(startTime);
