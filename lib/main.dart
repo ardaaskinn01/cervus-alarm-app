@@ -308,8 +308,78 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     }
   }
 
-  // _checkForUpdate and _showUpdateDialog remain same...
-  // (Assuming they are correctly defined later in the file as in the original source)
+  Future<void> _checkForUpdate() async {
+    try {
+      final config = await DashboardService().getVersionConfig();
+      if (config == null) return;
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      final int currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
+      final int latestBuild = int.tryParse(config['buildNumber']?.toString() ?? "") ?? currentBuild;
+
+      debugPrint("🔍 Version Check: Device=$currentBuild, Market=$latestBuild");
+
+      if (latestBuild > currentBuild) {
+        if (!mounted) return;
+        await _showUpdateDialog(
+          config['androidUrl']?.toString() ?? "https://play.google.com/store/apps/details?id=com.cervus.alarmly",
+          config['iosUrl']?.toString() ?? "https://apps.apple.com/app/id6761625063",
+        );
+      }
+    } catch (e) {
+      debugPrint("Versiyon kontrol hatası: $e");
+    }
+  }
+
+  Future<void> _showUpdateDialog(String androidUrl, String iosUrl) async {
+    final locale = ref.read(localeProvider);
+    final isTr = locale == 'tr';
+
+    return showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isTr ? "Güncelleme Mevcut" : "Update Available",
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isTr 
+            ? "Uygulamanın yeni bir sürümü mevcut. En iyi deneyim için lütfen güncelleyin." 
+            : "A new version of the app is available. Please update for the best experience.",
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              isTr ? "Şimdi Değil" : "Not Now",
+              style: const TextStyle(color: Colors.white38),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final url = Uri.parse(Platform.isAndroid ? androidUrl : iosUrl);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              isTr ? "Güncelle" : "Update",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
