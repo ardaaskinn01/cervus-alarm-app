@@ -137,7 +137,12 @@ class LocalStorageService {
     if (id == null) {
       final random = Random();
       final randomStr = List.generate(6, (_) => random.nextInt(10)).join();
-      final platformPrefix = Platform.isIOS ? 'ios_user_' : 'android_user_';
+      String platformPrefix = 'user_';
+      if (Platform.isIOS) {
+        platformPrefix = 'ios_user_';
+      } else if (Platform.isAndroid) {
+        platformPrefix = 'android_user_';
+      }
       id = '$platformPrefix$randomStr';
       await box.put('installation_id', id);
     }

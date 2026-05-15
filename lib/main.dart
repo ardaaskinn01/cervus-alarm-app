@@ -256,14 +256,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       await Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
       await RevenueCatService.init(ref);
 
-      final String installationId = await storageService.getInstallationId();
-      await DashboardService().init(installationId);
       if (Platform.isIOS) {
-        await DashboardService().logVisit();
         final status = await AppTrackingTransparency.trackingAuthorizationStatus;
         if (status == TrackingStatus.notDetermined) {
           await AppTrackingTransparency.requestTrackingAuthorization();
         }
+      }
+
+      final String installationId = await storageService.getInstallationId();
+      await DashboardService().init(installationId);
+      
+      if (Platform.isIOS) {
+        await DashboardService().logVisit();
       } else {
         DashboardService().logVisit();
       }
@@ -425,10 +429,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                           ),
                         ],
                       ),
-                      child: Image.asset(
-                        'assets/images/Alarmly.PNG',
-                        width: 140,
-                        height: 140,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/Alarmly.PNG',
+                          width: 140,
+                          height: 140,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
