@@ -42,10 +42,7 @@ class DashboardService with WidgetsBindingObserver {
   Future<void> logVisit() async {
     if (!_isInitialized || _deviceId == null || _deviceId!.isEmpty) return;
     
-    // iOS için bağlantı stabilitesi adına kısa bir gecikme
-    if (Platform.isIOS) {
-      await Future.delayed(const Duration(seconds: 2));
-    }
+
 
     try {
       final now = DateTime.now();

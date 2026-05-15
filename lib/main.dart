@@ -176,7 +176,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     final locale = storageService.getLanguage();
 
     try {
-      await Firebase.initializeApp().catchError((e) => debugPrint("Firebase: $e"));
       await RevenueCatService.init(ref);
 
       final String installationId = await storageService.getInstallationId();
