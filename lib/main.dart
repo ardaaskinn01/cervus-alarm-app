@@ -176,18 +176,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     final locale = storageService.getLanguage();
 
     try {
-      await RevenueCatService.init(ref);
+      // 1. KRİTİK BAŞLATMALARI PARALEL ÇALIŞTIR (Timeout ile koru)
+      final initTasks = Future.wait([
+        RevenueCatService.init(ref).timeout(const Duration(seconds: 5)).catchError((e) => debugPrint("RC Init Timeout")),
+        MobileAds.instance.initialize().timeout(const Duration(seconds: 5)).catchError((e) => debugPrint("Ads Init Timeout")),
+        ref.read(alarmServiceProvider).init().timeout(const Duration(seconds: 5)).catchError((e) => debugPrint("Alarm Init Timeout")),
+        _checkForUpdate().timeout(const Duration(seconds: 5)).catchError((e) => debugPrint("Update Check Timeout")),
+        (() async {
+          final String installationId = await storageService.getInstallationId();
+          await DashboardService().init(installationId);
+          DashboardService().logVisit();
+        })(),
+      ]);
 
-      final String installationId = await storageService.getInstallationId();
-      await DashboardService().init(installationId);
-      
-      // FIRE AND FORGET! await olmadan hızlıca gönder
-      DashboardService().logVisit();
-      
-      await MobileAds.instance.initialize();
-      ref.read(localeProvider.notifier).setLocaleSync(storageService.getLanguage());
-
-      await ref.read(alarmServiceProvider).init();
+      // 2. BİLDİRİM VE İZİN İŞLEMLERİ (Kullanıcı etkileşimi gerekebilir)
       final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
       
       void onNotificationTap(NotificationResponse response) {
@@ -221,64 +223,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       }
 
       if (permissionGranted == false && mounted) {
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: Row(
-              children: [
-                const Icon(Icons.notifications_off_rounded, color: Color(0xFFF59E0B)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    AppLocalizations.get('battery_dialog_title', locale),
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              AppLocalizations.get('battery_dialog_content', locale),
-              style: const TextStyle(color: Colors.white70, height: 1.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(AppLocalizations.get('battery_dialog_now_not', locale), style: const TextStyle(color: Colors.white38)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF59E0B),
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          AppLocalizations.get('battery_snack_bar', locale),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        duration: const Duration(seconds: 6),
-                      ),
-                    );
-                  }
-                },
-                child: Text(AppLocalizations.get('battery_dialog_open_settings', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
+        // İzin diyaloğu gösteriliyorsa bu süre splash süresine dahil olur
+        await _showBatteryDialog(locale);
       }
 
-      // 🎯 MİNİMUM SPLASH SÜRESİNİ 3.5 SANİYEYE ÇIKARDIK
+      // 3. TÜM ARKA PLAN GÖREVLERİNİN BİTMESİNİ BEKLE
+      await initTasks;
+
+      // 4. MİNİMUM SPLASH SÜRESİNİ 2 SANİYEYE İNDİRDİK
       final elapsedTime = DateTime.now().difference(startTime);
-      if (elapsedTime.inMilliseconds < 3500) {
-        await Future.delayed(Duration(milliseconds: 3500 - elapsedTime.inMilliseconds));
+      if (elapsedTime.inMilliseconds < 2000) {
+        await Future.delayed(Duration(milliseconds: 2000 - elapsedTime.inMilliseconds));
       }
 
       bool isPrivacyAccepted = storageService.getPrivacyPolicyAccepted();
@@ -291,8 +246,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
           if (alarmId != null) nextView = RingingView(alarmId: alarmId);
         }
       }
-
-      await _checkForUpdate();
 
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -310,6 +263,61 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
         isAppReady.value = true;
       }
     }
+  }
+
+  Future<void> _showBatteryDialog(String locale) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Row(
+          children: [
+            const Icon(Icons.notifications_off_rounded, color: Color(0xFFF59E0B)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                AppLocalizations.get('battery_dialog_title', locale),
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          AppLocalizations.get('battery_dialog_content', locale),
+          style: const TextStyle(color: Colors.white70, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.get('battery_dialog_now_not', locale), style: const TextStyle(color: Colors.white38)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF59E0B),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.get('battery_snack_bar', locale),
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    backgroundColor: const Color(0xFF1E3A8A),
+                    duration: const Duration(seconds: 6),
+                  ),
+                );
+              }
+            },
+            child: Text(AppLocalizations.get('battery_dialog_open_settings', locale), style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _checkForUpdate() async {

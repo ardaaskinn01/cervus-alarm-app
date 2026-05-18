@@ -50,8 +50,8 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
       final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
       stopMethod = currentAlarm.stopMethod;
 
-      if (currentAlarm.rewardUnlocked) {
-        final updatedAlarm = currentAlarm.copyWith(rewardUnlocked: false);
+      if (!isSnooze && currentAlarm.rewardUnlocked) {
+        final updatedAlarm = currentAlarm.copyWith(rewardUnlocked: false, stopMethod: 'math');
         ref.read(homeViewModelProvider.notifier).silentEditAlarm(updatedAlarm);
       }
     } catch (e) {

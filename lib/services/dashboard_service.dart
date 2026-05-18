@@ -150,7 +150,7 @@ class DashboardService with WidgetsBindingObserver {
   Future<Map<String, dynamic>?> getVersionConfig() async {
     try {
       final url = "https://firestore.googleapis.com/v1/projects/$_projectId/databases/(default)/documents/settings/app_config?key=$_apiKey";
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
