@@ -59,6 +59,12 @@ class AdHelper {
     return '';
   }
 
+  static String get settingsBannerAdUnitId {
+    if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/3837577343';
+    if (Platform.isIOS) return 'ca-app-pub-2073707860224174/1902890590';
+    return '';
+  }
+
   static String get interstitialAdUnitId {
     if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/6027839020';
     if (Platform.isIOS) return 'ca-app-pub-2073707860224174/4152498035';

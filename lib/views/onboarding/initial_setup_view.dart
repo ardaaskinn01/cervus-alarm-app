@@ -5,7 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/app_localizations.dart';
 import '../../services/local_storage_service.dart';
+import '../../services/alarm_kit_service.dart';
 import '../home/home_view.dart';
+import 'dart:io';
 
 class InitialSetupView extends ConsumerStatefulWidget {
   const InitialSetupView({super.key});
@@ -126,12 +128,58 @@ class _InitialSetupViewState extends ConsumerState<InitialSetupView> {
             onPressed: () async {
               await ref.read(localStorageServiceProvider).setPrivacyPolicyAccepted(true);
               Navigator.pop(ctx);
-              _finishSetup();
+              if (Platform.isAndroid) {
+                _showBatteryIntroduction();
+              } else {
+                _finishSetup();
+              }
             },
             child: Text(
               acceptBtn,
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showBatteryIntroduction() {
+    final langCode = ref.read(localeProvider);
+    final isTr = langCode == 'tr';
+    
+    final title = isTr ? 'Kritik Uyarı' : 'Critical Warning';
+    final desc = isTr 
+      ? 'Alarmların tam zamanında çalabilmesi için telefonunuzun arka plan kısıtlamalarını kaldırmanız gerekmektedir.\n\nAçılacak olan sayfada lütfen **"Kısıtlama Yok"** (No Restrictions) seçeneğini işaretleyin. Bu işlem alarmların cihazınız uyku modundayken bile çalmasını sağlar.' 
+      : 'To ensure your alarms ring exactly on time, you must remove background battery restrictions.\n\nIn the next screen, please select **"No Restrictions"**. This ensures your alarms ring reliably even when your device is in sleep mode.';
+    final btnText = isTr ? 'Ayarları Yapılandır' : 'Configure Settings';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const Icon(Icons.battery_alert_rounded, color: Colors.orangeAccent),
+            const SizedBox(width: 10),
+            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(desc, style: const TextStyle(color: Colors.white70, height: 1.5)),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await AlarmKitService.requestIgnoreBatteryOptimizations();
+              _finishSetup();
+            },
+            child: Text(btnText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           )
         ],
       ),

@@ -184,11 +184,11 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.get('alarm_saved_warning', locale),
+            AppLocalizations.get('alarm_saved_success', locale),
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
-          backgroundColor: Colors.orange.shade800,
-          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.green.shade800,
+          duration: const Duration(seconds: 3),
         ),
       );
       Navigator.pop(context);
@@ -201,36 +201,41 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
     final isPremium = ref.watch(isPremiumProvider);
     final methodsUnlocked = isPremium || _rewardUnlockedThisSession;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
         ),
-      ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Sayfa Tutamacı
-                Container(
-                  width: 45,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                
-                // Başlık
-                Text(
-                  widget.existingAlarm != null ? AppLocalizations.get('add_edit_title', locale) : AppLocalizations.get('add_new_title', locale),
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5),
+                // Header Row (X - Title - Check)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Text(
+                      widget.existingAlarm != null ? AppLocalizations.get('add_edit_title', locale) : AppLocalizations.get('add_new_title', locale),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check, color: AppTheme.primaryColor, size: 28),
+                      onPressed: saveAlarm,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 
@@ -351,31 +356,12 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   _buildTryOnceButton(),
                 ],
 
-                const SizedBox(height: 40),
-
-                // Kaydet Butonu (Premium Look)
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    onPressed: saveAlarm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.secondaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      elevation: 8,
-                      shadowColor: AppTheme.secondaryColor.withOpacity(0.5),
-                    ),
-                    child: Text(
-                      AppLocalizations.get('add_save', locale).toUpperCase(),
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 20),
               ],
             ),
           ),
         ),
+      ),
       ),
     );
   }

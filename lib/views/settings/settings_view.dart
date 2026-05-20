@@ -746,7 +746,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
           ),
         ),
       ),
-      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget(isSettings: true)),
     );
   }
 

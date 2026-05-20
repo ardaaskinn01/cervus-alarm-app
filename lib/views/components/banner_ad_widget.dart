@@ -6,7 +6,8 @@ import '../../services/revenuecat_service.dart';
 import 'dart:io';
 
 class BannerAdWidget extends ConsumerStatefulWidget {
-  const BannerAdWidget({super.key});
+  final bool isSettings;
+  const BannerAdWidget({super.key, this.isSettings = false});
 
   @override
   ConsumerState<BannerAdWidget> createState() => _BannerAdWidgetState();
@@ -28,7 +29,7 @@ class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
   void _loadAd() {
     // Güvenliği artırmak için standart banner boyutuna geri dönüyoruz.
     // Adaptive Banner hesaplama sırasında null dönüp veya hata verebiliyor.
-    final adUnitId = AdHelper.bannerAdUnitId;
+    final adUnitId = widget.isSettings ? AdHelper.settingsBannerAdUnitId : AdHelper.bannerAdUnitId;
 
     _bannerAd = BannerAd(
       adUnitId: adUnitId,

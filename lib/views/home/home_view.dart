@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/app_theme.dart';
 import '../../models/alarm_model.dart';
@@ -8,22 +10,165 @@ import 'add_alarm_bottom_sheet.dart';
 import '../settings/settings_view.dart';
 import '../../core/app_localizations.dart';
 import '../components/banner_ad_widget.dart';
-import 'package:flutter/cupertino.dart';
+import '../../services/dashboard_service.dart';
+import '../../services/local_storage_service.dart';
+import '../../services/alarm_kit_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class HomeView extends ConsumerWidget {
+class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
+
+  @override
+  ConsumerState<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends ConsumerState<HomeView> {
+  @override
+  void initState() {
+    super.initState();
+    _initBackgroundTasks();
+  }
+
+  Future<void> _initBackgroundTasks() async {
+    // Splash ekranını hızlandırmak için buraya taşınan işlemler
+    try {
+      final storageService = ref.read(localStorageServiceProvider);
+      final String installationId = await storageService.getInstallationId();
+      
+      // Dashboard & Log (Hata fırlatmadan arka planda çalışsın)
+      DashboardService().init(installationId).then((_) {
+        DashboardService().logVisit();
+      }).catchError((e) => debugPrint("Dashboard init error: $e"));
+
+      // Versiyon Kontrolü
+      _checkForUpdate();
+
+      // Android Spesifik İzinler (Pil Tasarrufu ve Kesin Saat Ayarı)
+      if (Platform.isAndroid) {
+        AlarmKitService.requestIgnoreBatteryOptimizations();
+        final hasExactAlarm = await AlarmKitService.checkExactAlarmPermission();
+        if (!hasExactAlarm && mounted) {
+           _showExactAlarmDialog();
+        }
+      }
+    } catch (e) {
+      debugPrint("Background tasks error: $e");
+    }
+  }
+
+  Future<void> _checkForUpdate() async {
+    try {
+      final config = await DashboardService().getVersionConfig();
+      if (config == null) return;
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      final int currentBuild = int.tryParse(packageInfo.buildNumber) ?? 0;
+      final int latestBuild = int.tryParse(config['buildNumber']?.toString() ?? "") ?? currentBuild;
+
+      if (latestBuild > currentBuild) {
+        if (!mounted) return;
+        _showUpdateDialog(
+          config['androidUrl']?.toString() ?? "https://play.google.com/store/apps/details?id=com.cervus.alarmly",
+          config['iosUrl']?.toString() ?? "https://apps.apple.com/app/id6761625063",
+        );
+      }
+    } catch (e) {
+      debugPrint("Update check error: $e");
+    }
+  }
+
+  void _showExactAlarmDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Kesin Alarm İzni", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text(
+          "Alarmların tam zamanında çalabilmesi için 'Kesin Alarm' izni gereklidir. Lütfen ayarlardan bu izni verin.",
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Daha Sonra", style: TextStyle(color: Colors.white38)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+            onPressed: () {
+              Navigator.pop(ctx);
+              AlarmKitService.openExactAlarmSettings();
+            },
+            child: const Text("Ayarlara Git", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUpdateDialog(String androidUrl, String iosUrl) {
+    final locale = ref.read(localeProvider);
+    final isTr = locale == 'tr';
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isTr ? "Güncelleme Mevcut" : "Update Available",
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isTr 
+            ? "Uygulamanın yeni bir sürümü mevcut. En iyi deneyim için lütfen güncelleyin." 
+            : "A new version of the app is available. Please update for the best experience.",
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              isTr ? "Şimdi Değil" : "Not Now",
+              style: const TextStyle(color: Colors.white38),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final url = Uri.parse(Platform.isAndroid ? androidUrl : iosUrl);
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              isTr ? "Güncelle" : "Update",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showAddAlarmSheet(BuildContext context, {AlarmModel? existingAlarm}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddAlarmBottomSheet(existingAlarm: existingAlarm),
     );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final alarms = ref.watch(homeViewModelProvider);
     final locale = ref.watch(localeProvider);
 
@@ -225,30 +370,29 @@ class AlarmCard extends ConsumerWidget {
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         color: cardBg,
-        border: Border.all(color: borderColor, width: 1.5),
+        border: Border.all(color: borderColor, width: 1.0),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.25),
-                  blurRadius: 20,
-                  spreadRadius: 1,
+                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  blurRadius: 15,
+                  spreadRadius: 0,
                   offset: const Offset(0, 4),
                 )
               ]
             : [],
       ),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
@@ -256,22 +400,22 @@ class AlarmCard extends ConsumerWidget {
                       children: [
                         if (alarm.label.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
+                            padding: const EdgeInsets.only(bottom: 4.0),
                             child: Text(
                               alarm.label.toUpperCase(),
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 11,
                                 color: isActive ? AppTheme.secondaryColor : Colors.white30,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ),
                         Text(
                           timeStr,
                           style: TextStyle(
-                            fontSize: 52,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 42,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: -1,
                             color: isActive ? Colors.white : Colors.white24,
                             height: 1.0,
@@ -280,17 +424,20 @@ class AlarmCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  CupertinoSwitch(
-                    value: isActive,
-                    activeColor: AppTheme.primaryColor,
-                    trackColor: Colors.white.withOpacity(0.1),
-                    onChanged: (val) {
-                      ref.read(homeViewModelProvider.notifier).toggleAlarm(alarm, val);
-                    },
+                  Transform.scale(
+                    scale: 0.85,
+                    child: CupertinoSwitch(
+                      value: isActive,
+                      activeColor: AppTheme.primaryColor,
+                      trackColor: Colors.white.withOpacity(0.08),
+                      onChanged: (val) {
+                        ref.read(homeViewModelProvider.notifier).toggleAlarm(alarm, val);
+                      },
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -301,20 +448,20 @@ class AlarmCard extends ConsumerWidget {
                         Text(
                           _formatDays(alarm.repeatDays),
                           style: TextStyle(
-                            fontSize: 14,
-                            color: isActive ? Colors.white70 : Colors.white30,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: isActive ? Colors.white60 : Colors.white24,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                         if (isActive)
                           Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
+                            padding: const EdgeInsets.only(top: 2.0),
                             child: Text(
                               _getTimeUntil(),
                               style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.primaryColor.withOpacity(0.9),
-                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                color: AppTheme.primaryColor.withOpacity(0.8),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -324,8 +471,8 @@ class AlarmCard extends ConsumerWidget {
                   if (isActive)
                     Icon(
                       alarm.stopMethod == 'math' ? Icons.calculate_outlined : Icons.extension_outlined,
-                      size: 20,
-                      color: Colors.white30,
+                      size: 18,
+                      color: Colors.white24,
                     ),
                 ],
               ),

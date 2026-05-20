@@ -9,6 +9,7 @@ import '../models/alarm_model.dart';
 import 'package:flutter/foundation.dart';
 import 'local_storage_service.dart';
 import '../core/app_localizations.dart';
+import 'alarm_kit_service.dart';
 
 final alarmServiceProvider = Provider<AlarmService>((ref) {
   final storage = ref.read(localStorageServiceProvider);
@@ -85,7 +86,7 @@ class AlarmService {
         volumeEnforced: Platform.isAndroid, // Android'de ses kontrolünü zorla
       ),
       vibrate: _storage.getGlobalVibrate(),
-      warningNotificationOnKill: true,
+      warningNotificationOnKill: false,
       notificationSettings: NotificationSettings(
         title: AppLocalizations.get('ringing_notification_title', locale),
         body: AppLocalizations.get('ringing_notification_body', locale),
@@ -95,12 +96,19 @@ class AlarmService {
     );
 
     try {
-      // iOS'ta kullanıcı uygulamayı yukarı kaydırıp ÖLDÜRÜRSE (swipe kill) çıkacak uyarıyı dile göre ayarlıyoruz
-      await Alarm.setWarningNotificationOnKill(
-        AppLocalizations.get('kill_warning_title', locale),
-        AppLocalizations.get('kill_warning_body', locale),
-      );
+      // AlarmKit entegrasyonu sayesinde artık "Swipe Kill" uyarısına gerek kalmadı.
       await Alarm.set(alarmSettings: alarmSettings);
+      
+      // iOS 17+ AlarmKit Entegrasyonu (Sistem Seviyesinde Arkaplanda Çalma Garantisi)
+      if (Platform.isIOS) {
+        await AlarmKitService.scheduleAlarm(
+          id: alarm.id,
+          hour: alarm.hour,
+          minute: alarm.minute,
+          title: alarm.label.isEmpty ? "Alarm" : alarm.label,
+          repeats: alarm.repeatDays,
+        );
+      }
 
     } catch (e) {
       debugPrint("Alarm kurulamadı: $e");
@@ -109,9 +117,15 @@ class AlarmService {
 
   Future<void> stopAlarm(int id) async {
     await Alarm.stop(id);
+    if (Platform.isIOS) {
+      await AlarmKitService.stopAlarm(id);
+    }
   }
 
   Future<void> cancelAlarm(int id) async {
     await Alarm.stop(id);
+    if (Platform.isIOS) {
+      await AlarmKitService.stopAlarm(id);
+    }
   }
 }
