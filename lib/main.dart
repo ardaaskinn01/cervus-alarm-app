@@ -21,6 +21,7 @@ import 'services/dashboard_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'core/navigator_key.dart';
+import 'services/alarm_kit_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
