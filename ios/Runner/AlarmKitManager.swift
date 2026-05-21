@@ -1,54 +1,59 @@
 import Foundation
-import AlarmKit
-import AppIntents
+import UserNotifications
+import AVFoundation
 
-@available(iOS 17.0, *)
+/// AlarmKitManager: iOS'ta uygulamanın kapalı olduğu/arka planda olduğu durumlar için
+/// native bildirim yöneticisini kullanarak alarm zamanlamasını garanti altına alır.
+@available(iOS 10.0, *)
 class AlarmKitManager {
     static let shared = AlarmKitManager()
     
     private init() {}
     
     func requestAuthorization(completion: @escaping (Bool) -> Void) {
-        Task {
-            do {
-                let success = try await AlarmManager.shared.requestAuthorization()
-                completion(success)
-            } catch {
-                print("AlarmKit Authorization Error: \(error)")
-                completion(false)
+        let center = UNUserNotificationCenter.current()
+        // Ses, uyarı ve kritik bildirim izinlerini istiyoruz.
+        center.requestAuthorization(options: [.alert, .sound, .badge, .criticalAlert]) { granted, error in
+            if let error = error {
+                print("Alarm Notification Authorization Error: \(error.localizedDescription)")
             }
+            completion(granted)
         }
     }
     
     func scheduleAlarm(id: String, hour: Int, minute: Int, title: String, repeats: [Int]) {
-        Task {
-            var dateComponents = DateComponents()
-            dateComponents.hour = hour
-            dateComponents.minute = minute
-            
-            // AlarmKit uses Alarm.Schedule for timing
-            let schedule = Alarm.Schedule.daily(at: dateComponents)
-            
-            let configuration = AlarmConfiguration(
-                title: title,
-                body: "Uyanma vakti!",
-                sound: .default,
-                schedule: schedule
-            )
-            
-            do {
-                try await AlarmManager.shared.schedule(id: id, configuration: configuration)
-                print("AlarmKit: Alarm scheduled successfully for \(hour):\(minute)")
-            } catch {
-                print("AlarmKit: Failed to schedule alarm: \(error)")
+        let center = UNUserNotificationCenter.current()
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = "Uyanma vakti!"
+        // Özel bir ses dosyanız varsa burada belirtebilirsiniz. Yoksa varsayılan alarm sesini çalar.
+        content.sound = UNNotificationSound.defaultCritical
+        
+        // Zamanlama bileşenleri
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+        
+        // Eğer her gün tekrar etmesi isteniyorsa repeats: true yapılır
+        let isDaily = repeats.count > 0 
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: isDaily)
+        
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        
+        center.add(request) { error in
+            if let error = error {
+                print("Failed to schedule native iOS alarm: \(error.localizedDescription)")
+            } else {
+                print("Native iOS Alarm scheduled successfully for \(hour):\(minute) (ID: \(id))")
             }
         }
     }
     
     func removeAlarm(id: String) {
-        Task {
-            await AlarmManager.shared.cancel(id: id)
-            print("AlarmKit: Alarm \(id) cancelled")
-        }
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [id])
+        center.removeDeliveredNotifications(withIdentifiers: [id])
+        print("Native iOS Alarm \(id) cancelled")
     }
 }
