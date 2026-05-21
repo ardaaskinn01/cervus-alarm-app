@@ -74,6 +74,18 @@ class _AlarmAppState extends ConsumerState<AlarmApp> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _setupAlarmListener();
+    
+    // iOS Native Alarm Tıklamasını Dinle
+    if (Platform.isIOS) {
+      AlarmKitService.init((alarmId) {
+        final id = int.tryParse(alarmId);
+        if (id != null) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (context) => RingingView(alarmId: id)),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -236,6 +248,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
         final payload = launchDetails?.notificationResponse?.payload;
         if (payload != null) {
           final int? alarmId = int.tryParse(payload);
+          if (alarmId != null) nextView = RingingView(alarmId: alarmId);
+        }
+      } else if (Platform.isIOS) {
+        // AlarmKit/Native Tarafından gelen açılışı kontrol et
+        final String? nativeId = await AlarmKitService.getLaunchedAlarmId();
+        if (nativeId != null) {
+          final int? alarmId = int.tryParse(nativeId);
           if (alarmId != null) nextView = RingingView(alarmId: alarmId);
         }
       }

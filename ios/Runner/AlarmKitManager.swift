@@ -21,31 +21,37 @@ class AlarmKitManager {
         }
     }
     
-    func scheduleAlarm(id: String, hour: Int, minute: Int, title: String, repeats: [Int]) {
+    func scheduleAlarm(id: String, hour: Int, minute: Int, title: String, repeats: [Int], sound: String) {
         let center = UNUserNotificationCenter.current()
         
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = "Uyanma vakti!"
-        // Özel bir ses dosyanız varsa burada belirtebilirsiniz. Yoksa varsayılan alarm sesini çalar.
-        content.sound = UNNotificationSound.defaultCritical
+        content.userInfo = ["alarmId": id] // Tıklanınca Flutter'a iletilecek ID
+        
+        // Ses dosyası ayarı (30 saniyeye kadar olan .mp3 dosyalarını iOS bildirim sesi olarak çalabilir)
+        // Dosyanın Xcode Resources (Bundle) içinde olması zorunludur.
+        content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: sound))
         
         // Zamanlama bileşenleri
         var dateComponents = DateComponents()
         dateComponents.hour = hour
         dateComponents.minute = minute
         
-        // Eğer her gün tekrar etmesi isteniyorsa repeats: true yapılır
+        // Eğer her gün tekrar etmesi isteniyorsa repeats kullanılır
         let isDaily = repeats.count > 0 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: isDaily)
         
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         
+        // Önce eski talebi temizle (ID çakışmasını önlemek için)
+        center.removePendingNotificationRequests(withIdentifiers: [id])
+        
         center.add(request) { error in
             if let error = error {
                 print("Failed to schedule native iOS alarm: \(error.localizedDescription)")
             } else {
-                print("Native iOS Alarm scheduled successfully for \(hour):\(minute) (ID: \(id))")
+                print("Native iOS Alarm scheduled successfully for \(hour):\(minute) with sound \(sound) (ID: \(id))")
             }
         }
     }

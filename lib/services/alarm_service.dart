@@ -107,6 +107,7 @@ class AlarmService {
           minute: alarm.minute,
           title: alarm.label.isEmpty ? "Alarm" : alarm.label,
           repeats: alarm.repeatDays,
+          sound: audioPathAsset.split('/').last,
         );
       }
 

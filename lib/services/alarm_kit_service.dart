@@ -2,7 +2,23 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 
 class AlarmKitService {
-  static const MethodChannel _channel = MethodChannel('com.app/alarm_kit');
+  static final MethodChannel _channel = const MethodChannel('com.app/alarm_kit');
+  static Function(String)? _onAlarmTappedCallback;
+
+  static void init(Function(String) onTapped) {
+    _onAlarmTappedCallback = onTapped;
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onAlarmTapped') {
+        final String? alarmId = call.arguments as String?;
+        if (alarmId != null) _onAlarmTappedCallback?.call(alarmId);
+      }
+    });
+  }
+
+  static Future<String?> getLaunchedAlarmId() async {
+    if (!Platform.isIOS) return null;
+    return await _channel.invokeMethod('getLaunchedAlarmId');
+  }
 
   static Future<bool> requestAuthorization() async {
     if (!Platform.isIOS) return true;
@@ -21,6 +37,7 @@ class AlarmKitService {
     required int minute,
     required String title,
     required List<int> repeats,
+    String? sound,
   }) async {
     if (!Platform.isIOS) return;
     try {
@@ -30,6 +47,7 @@ class AlarmKitService {
         'minute': minute,
         'title': title,
         'repeats': repeats,
+        'sound': sound,
       });
     } on PlatformException catch (e) {
       print("AlarmKit Schedule Error: ${e.message}");
