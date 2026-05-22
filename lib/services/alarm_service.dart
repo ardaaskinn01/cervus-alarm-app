@@ -85,6 +85,7 @@ class AlarmService {
         fadeDuration: const Duration(seconds: 5),
         volumeEnforced: Platform.isAndroid, // Android'de ses kontrolünü zorla
       ),
+      loopAudio: true,
       vibrate: _storage.getGlobalVibrate(),
       warningNotificationOnKill: false,
       notificationSettings: NotificationSettings(
