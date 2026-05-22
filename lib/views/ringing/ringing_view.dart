@@ -9,7 +9,10 @@ import 'shake_view.dart';
 import 'typing_view.dart';
 import 'memory_view.dart';
 import 'barcode_scanner_view.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../home/success_view.dart';
+import '../../views/components/banner_ad_widget.dart';
+import 'package:alarm/alarm.dart';
 
 class RingingView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -34,12 +37,26 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
 
     _bgPulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
     _bgPulseAnimation = Tween<double>(begin: 0.8, end: 1.5).animate(CurvedAnimation(parent: _bgPulseController, curve: Curves.slowMiddle));
+
+    // Servis üzerinden sesi başlat (Tüm sayfalarda çalmaya devam edecek)
+    _startContinuousSound();
+  }
+
+  Future<void> _startContinuousSound() async {
+    try {
+      final alarms = ref.read(homeViewModelProvider);
+      final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
+      await ref.read(alarmServiceProvider).playForegroundRinging(currentAlarm.soundPath);
+    } catch (e) {
+      debugPrint("Ses başlatılamadı: $e");
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _bgPulseController.dispose();
+    // Buradan sesi DURDURMUYORUZ (Süreklilik için)
     super.dispose();
   }
 
@@ -216,6 +233,7 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
             ),
           ],
         ),
+        bottomNavigationBar: const SafeArea(child: BannerAdWidget(type: BannerType.ringing)),
       ),
     );
   }

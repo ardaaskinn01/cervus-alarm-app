@@ -76,5 +76,17 @@ class AdHelper {
     if (Platform.isIOS) return 'ca-app-pub-2073707860224174/8798859050';
     return '';
   }
+
+  static String get ringingBannerAdUnitId {
+    if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/9485102800';
+    if (Platform.isIOS) return 'ca-app-pub-2073707860224174/4228906696';
+    return '';
+  }
+
+  static String get puzzleBannerAdUnitId {
+    if (Platform.isAndroid) return 'ca-app-pub-2073707860224174/9022068374';
+    if (Platform.isIOS) return 'ca-app-pub-2073707860224174/5541988366';
+    return '';
+  }
 }
 

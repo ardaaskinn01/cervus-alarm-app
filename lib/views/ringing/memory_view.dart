@@ -5,6 +5,7 @@ import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
+import '../../views/components/banner_ad_widget.dart';
 import '../../core/ad_helper.dart';
 import '../../services/revenuecat_service.dart';
 import 'dart:math';
@@ -228,6 +229,7 @@ class _MemoryViewState extends ConsumerState<MemoryView> {
             ),
           ),
         ),
+        bottomNavigationBar: const SafeArea(child: BannerAdWidget(type: BannerType.puzzle)),
       ),
     );
   }

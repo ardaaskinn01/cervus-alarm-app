@@ -5,9 +5,11 @@ import '../../core/ad_helper.dart';
 import '../../services/revenuecat_service.dart';
 import 'dart:io';
 
+enum BannerType { home, settings, ringing, puzzle }
+
 class BannerAdWidget extends ConsumerStatefulWidget {
-  final bool isSettings;
-  const BannerAdWidget({super.key, this.isSettings = false});
+  final BannerType type;
+  const BannerAdWidget({super.key, this.type = BannerType.home});
 
   @override
   ConsumerState<BannerAdWidget> createState() => _BannerAdWidgetState();
@@ -29,7 +31,20 @@ class _BannerAdWidgetState extends ConsumerState<BannerAdWidget> {
   void _loadAd() {
     // Güvenliği artırmak için standart banner boyutuna geri dönüyoruz.
     // Adaptive Banner hesaplama sırasında null dönüp veya hata verebiliyor.
-    final adUnitId = widget.isSettings ? AdHelper.settingsBannerAdUnitId : AdHelper.bannerAdUnitId;
+    String adUnitId;
+    switch (widget.type) {
+      case BannerType.settings:
+        adUnitId = AdHelper.settingsBannerAdUnitId;
+        break;
+      case BannerType.ringing:
+        adUnitId = AdHelper.ringingBannerAdUnitId;
+        break;
+      case BannerType.puzzle:
+        adUnitId = AdHelper.puzzleBannerAdUnitId;
+        break;
+      default:
+        adUnitId = AdHelper.bannerAdUnitId;
+    }
 
     _bannerAd = BannerAd(
       adUnitId: adUnitId,

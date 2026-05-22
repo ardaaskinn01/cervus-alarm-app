@@ -312,7 +312,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
+        bottomNavigationBar: const SafeArea(child: BannerAdWidget(type: BannerType.home)),
       );
     }
   }

@@ -11,39 +11,56 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
   @override
   List<AlarmModel> build() {
     final alarms = ref.read(localStorageServiceProvider).getAlarms();
-    alarms.sort((a, b) {
-      if (a.hour != b.hour) return a.hour.compareTo(b.hour);
-      return a.minute.compareTo(b.minute);
-    });
-
-    // Uygulama açıldığında geçmişte kalmış (çalmış ama hala aktif görünen) 
-    // tek seferlik alarmları temizle
-    Future.microtask(() => checkStaleAlarms());
-
+    // Uygulama açıldığında sistemdeki kurulu alarmlar ile 
+    // bizim veritabanımızı senkronize et.
+    Future.microtask(() => syncWithSystem());
+    
     return alarms;
   }
 
-  /// Çalmış ve bitmiş tek seferlik alarmları veritabanında pasif yapar.
-  Future<void> checkStaleAlarms() async {
+  /// Sistemdeki (Alarm package) alarmlar ile yerel veritabanını 
+  /// tam senkronize eder. 'Açık görünüp aslında çalmayan' bug'ını çözer.
+  Future<void> syncWithSystem() async {
     final storage = ref.read(localStorageServiceProvider);
+    final alarmService = ref.read(alarmServiceProvider);
+    final locale = ref.read(localeProvider);
+    
     bool changed = false;
     final currentAlarms = List<AlarmModel>.from(state);
+    final systemAlarms = await Alarm.getAlarms(); 
 
     for (int i = 0; i < currentAlarms.length; i++) {
-      final alarm = currentAlarms[i];
-      
-      // Eğer alarm aktifse ve tekrar günü seçilmemişse (tek seferlikse)
-      if (alarm.isActive && alarm.repeatDays.isEmpty) {
-        final scheduledAlarm = Alarm.getAlarm(alarm.id);
+        final alarm = currentAlarms[i];
         
-        // Eğer alarm paketi bu ID'yi artık listesinde tutmuyorsa (çalmış demektir)
-        if (scheduledAlarm == null) {
-          final updated = alarm.copyWith(isActive: false);
-          await storage.updateAlarm(updated);
-          currentAlarms[i] = updated;
-          changed = true;
+        // 1. Durum: Bizde AKTİF ama Sistemde YOK (Kritik Bug Çözümü)
+        // Eğer sistemde bu ID ile bir alarm yoksa ve biz aktif biliyorsak:
+        final existsInSystem = systemAlarms.any((a) => a.id == alarm.id);
+        
+        if (alarm.isActive && !existsInSystem) {
+          // Eğer saati henüz geçmediyse veya tekrarlayan bir alarm ise YENİDEN KUR
+          final now = DateTime.now();
+          final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
+          
+          if (alarm.repeatDays.isNotEmpty || alarmTime.isAfter(now)) {
+            debugPrint("⚠️ Bug detected: Alarm ${alarm.id} was active in DB but missing in System. Re-scheduling...");
+            try {
+              await alarmService.scheduleAlarm(alarm, locale);
+            } catch (e) {
+              debugPrint("Reschedule error: $e");
+            }
+          } else {
+            // Saati geçmiş ve tek seferlikse PASİF yap.
+            final updated = alarm.copyWith(isActive: false);
+            await storage.updateAlarm(updated);
+            currentAlarms[i] = updated;
+            changed = true;
+          }
         }
-      }
+        
+        // 2. Durum: Bizde PASİF ama Sistemde HALA VAR (Nadiren olur, temizlik amaçlı)
+        if (!alarm.isActive && existsInSystem) {
+          await alarmService.cancelAlarm(alarm.id);
+        }
     }
 
     if (changed) {
@@ -129,6 +146,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
         await alarmService.scheduleAlarm(updatedAlarm, locale);
       } else {
         await alarmService.cancelAlarm(updatedAlarm.id);
+        await alarmService.stopForegroundRinging(); // Görev bittiğinde sesi sustur
       }
     } catch (e) {
       debugPrint('Alarm toggle hatası: $e');
@@ -156,6 +174,7 @@ class HomeViewModel extends Notifier<List<AlarmModel>> {
         final locale = ref.read(localeProvider);
         await alarmService.cancelAlarm(id);
         await alarmService.scheduleAlarm(snoozedAlarm, locale);
+        await alarmService.stopForegroundRinging(); // Erteleyince sesi sustur
       } catch (e) {
         debugPrint('Snooze alarm hatası: $e');
       }

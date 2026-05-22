@@ -11,6 +11,8 @@ import 'local_storage_service.dart';
 import '../core/app_localizations.dart';
 import 'alarm_kit_service.dart';
 
+import 'package:audioplayers/audioplayers.dart';
+
 final alarmServiceProvider = Provider<AlarmService>((ref) {
   final storage = ref.read(localStorageServiceProvider);
   return AlarmService(storage);
@@ -18,8 +20,27 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
 
 class AlarmService {
   final LocalStorageService _storage;
+  final AudioPlayer _foregroundPlayer = AudioPlayer();
 
   AlarmService(this._storage);
+
+  /// Ön planda (Uygulama açıkken) alarm sesini başlatır.
+  /// Bulmaca çözülene kadar çalmaya devam eder.
+  Future<void> playForegroundRinging(String soundPath) async {
+    try {
+      await _foregroundPlayer.stop();
+      String assetPath = soundPath.replaceAll('assets/', '');
+      await _foregroundPlayer.setReleaseMode(ReleaseMode.loop);
+      await _foregroundPlayer.play(AssetSource(assetPath), volume: 1.0);
+    } catch (e) {
+      debugPrint("Ön plan ses çalma hatası: $e");
+    }
+  }
+
+  /// Ön plan sesini tamamen durdurur.
+  Future<void> stopForegroundRinging() async {
+    await _foregroundPlayer.stop();
+  }
 
   Future<void> init() async {
     // alarm paketini başlat

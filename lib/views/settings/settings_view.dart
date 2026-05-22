@@ -554,11 +554,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
               const SizedBox(height: 10),
               
               if (!isPremium)
-                _buildSettingTile(
-                  icon: Icons.workspace_premium_rounded,
+                _buildGoldenProTile(
                   title: AppLocalizations.get('settings_premium_title', locale),
                   subtitle: AppLocalizations.get('settings_premium_subtitle', locale),
-                  iconColor: Colors.amber,
                   onTap: _showPremiumDialog,
                 )
               else
@@ -746,7 +744,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
           ),
         ),
       ),
-      bottomNavigationBar: const SafeArea(child: BannerAdWidget(isSettings: true)),
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget(type: BannerType.settings)),
     );
   }
 
@@ -832,4 +830,79 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
       ),
     );
   }
+
+  Widget _buildGoldenProTile({
+    required String title,
+    String? subtitle,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [
+            Colors.amber.shade400,
+            Colors.amber.shade700,
+            Colors.orange.shade800,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withOpacity(0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle ?? '',
+                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
+

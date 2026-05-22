@@ -98,8 +98,8 @@ class _AlarmAppState extends ConsumerState<AlarmApp> with WidgetsBindingObserver
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Uygulama ön plana geldiğinde (arka planda çalmış bitmiş) stale alarmları temizle
-      ref.read(homeViewModelProvider.notifier).checkStaleAlarms();
+      // Uygulama ön plana geldiğinde tüm alarmları sistemle senkronize et (Bug önleyici)
+      ref.read(homeViewModelProvider.notifier).syncWithSystem();
     }
   }
 
