@@ -12,6 +12,7 @@ import '../../services/local_storage_service.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../components/premium_dialog_helper.dart';
 
 class AddAlarmBottomSheet extends ConsumerStatefulWidget {
   final AlarmModel? existingAlarm;
@@ -510,7 +511,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                 onPressed: () {
                   Navigator.pop(ctx);
-                  Navigator.pop(context);
+                  PremiumDialogHelper.show(context, ref);
                 },
                 child: Text(AppLocalizations.get('premium_lock_btn', locale)),
               ),

@@ -140,7 +140,7 @@ class AppLocalizations {
       // Lock & Rewards
       'premium_lock_title': 'Pro Özellik',
       'premium_lock_desc': 'Farklı alarm kapatma yöntemleri sadece Alarmly Pro kullanıcılarına özeldir.',
-      'premium_lock_btn': 'Proya Geç (Ayarlar)',
+      'premium_lock_btn': 'Proya Geç',
       'reward_try_once': 'Tek Seferlik Aç  🎬',
       'reward_try_once_desc': '— Reklam izle, tüm yöntemleri aç',
       'reward_unlocked_toast': 'Tüm kapatma yöntemleri bu alarm için açıldı! 🎉',
@@ -290,7 +290,7 @@ class AppLocalizations {
       // Lock & Rewards
       'premium_lock_title': 'Pro Feature',
       'premium_lock_desc': 'Different alarm stop methods are exclusive to Alarmly Pro users.',
-      'premium_lock_btn': 'Upgrade to Pro (Settings)',
+      'premium_lock_btn': 'Upgrade to Pro',
       'reward_try_once': 'Unlock Once  🎬',
       'reward_try_once_desc': '— Watch ad to unlock all methods',
       'reward_unlocked_toast': 'All stop methods unlocked for this alarm! 🎉',
