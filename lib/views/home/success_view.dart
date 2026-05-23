@@ -181,7 +181,13 @@ class _SuccessViewState extends ConsumerState<SuccessView> with TickerProviderSt
                         elevation: 10,
                         shadowColor: AppTheme.primaryColor.withOpacity(0.4),
                       ),
-                      onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                      onPressed: () {
+                        // Tüm navigasyon geçmişini sil ve HomeView'a (Ana Sayfa) temiz bir geçiş yap
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => const HomeView()),
+                          (route) => false,
+                        );
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

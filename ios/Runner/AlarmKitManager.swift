@@ -116,8 +116,9 @@ class AlarmKitManager {
         content.userInfo = ["alarmId": alarmId]
         
         // Ses dosyası uygulama bundle içinde mi?
-        // hard_alarm.mp3 -> Xcode'da "Copy Bundle Resources"a eklenmiş olmalı
-        if Bundle.main.url(forResource: "hard_alarm", withExtension: "mp3") != nil {
+        // bg_alarm.mp3 -> Xcode'da "Copy Bundle Resources"a eklenmiş olmalı
+        let soundName = sound.replacingOccurrences(of: ".mp3", with: "")
+        if Bundle.main.url(forResource: soundName, withExtension: "mp3") != nil {
             content.sound = UNNotificationSound.criticalSoundNamed(
                 UNNotificationSoundName(rawValue: sound),
                 withAudioVolume: 1.0

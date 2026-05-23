@@ -127,7 +127,7 @@ class AlarmService {
           id: alarm.id,
           fireDate: alarmTime, // Tam alarm saatini iletiyoruz, Swift gecikmeyi oradan hesaplar
           title: alarm.label.isEmpty ? "Alarm" : alarm.label,
-          sound: 'hard_alarm.mp3', // BİLDİRİMDE HER ZAMAN HARD ÇALSIN
+          sound: 'bg_alarm.mp3', // BİLDİRİMDE ARTIK BG_ALARM ÇALSIN (Hidden)
         );
       }
 
