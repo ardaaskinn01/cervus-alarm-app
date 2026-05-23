@@ -7,6 +7,7 @@ import '../../core/app_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../core/ad_helper.dart';
 import '../../services/revenuecat_service.dart';
+import 'home_view.dart';
 
 class SuccessView extends ConsumerStatefulWidget {
   const SuccessView({super.key});
