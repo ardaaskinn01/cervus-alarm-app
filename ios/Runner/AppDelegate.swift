@@ -13,56 +13,97 @@ import alarm
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
     
-    // Uygulama bildirimle mi açıldı kontrol et
-    if let remoteNotification = launchOptions?[.remoteNotification] as? [String: Any],
-       let alarmId = remoteNotification["alarmId"] as? String {
+    // Uygulama LOCAL BİLDİRİMLE mi açıldı kontrol et
+    // iOS 10+ için doğru yol: UNNotification kullanıcı bilgisi
+    if let notification = launchOptions?[.remoteNotification] as? [String: Any],
+       let alarmId = notification["alarmId"] as? String {
         launchedAlarmId = alarmId
     }
     
-    let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-    let alarmKitChannel = FlutterMethodChannel(name: "com.app/alarm_kit",
-                                              binaryMessenger: controller.binaryMessenger)
+    let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
+    let alarmKitChannel = FlutterMethodChannel(
+        name: "com.app/alarm_kit",
+        binaryMessenger: controller.binaryMessenger
+    )
     
     alarmKitChannel.setMethodCallHandler({
       [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+      
+      // getLaunchedAlarmId: iOS versiyonundan bağımsız her zaman çalışır
       if call.method == "getLaunchedAlarmId" {
           result(self?.launchedAlarmId)
           self?.launchedAlarmId = nil // Bir kez alındıktan sonra temizle
           return
       }
       
-      if #available(iOS 17.0, *) {
+      // *** ÖNEMLİ: iOS 17 değil, iOS 12.0 yeterlidir (AlarmKitManager @available(iOS 12.0))
+      if #available(iOS 12.0, *) {
           switch call.method {
+          
           case "requestAuthorization":
               AlarmKitManager.shared.requestAuthorization { success in
                   result(success)
               }
+          
+          // Eski scheduleAlarm (geriye dönük uyumluluk için tutuldu)
           case "scheduleAlarm":
-             if let args = call.arguments as? [String: Any],
-                  let id = args["id"] as? String,
-                  let hour = args["hour"] as? Int,
-                  let minute = args["minute"] as? Int,
-                  let title = args["title"] as? String,
-                  let repeats = args["repeats"] as? [Int] {
-                   let sound = args["sound"] as? String ?? "soft_alarm.mp3"
-                   AlarmKitManager.shared.scheduleAlarm(id: id, hour: hour, minute: minute, title: title, repeats: repeats, sound: sound)
-                   result(true)
-               } else {
-                  result(FlutterError(code: "INVALID_ARGS", message: "Arguments missing", details: nil))
+              if let args = call.arguments as? [String: Any],
+                 let id = args["id"] as? String,
+                 let hour = args["hour"] as? Int,
+                 let minute = args["minute"] as? Int,
+                 let title = args["title"] as? String,
+                 let repeats = args["repeats"] as? [Int] {
+                  let sound = args["sound"] as? String ?? "hard_alarm.mp3"
+                  AlarmKitManager.shared.scheduleAlarm(
+                      id: id, hour: hour, minute: minute,
+                      title: title, repeats: repeats, sound: sound
+                  )
+                  result(true)
+              } else {
+                  result(FlutterError(code: "INVALID_ARGS", message: "Arguments missing for scheduleAlarm", details: nil))
               }
+          
+          // YENİ scheduleAlarmChain - fireDate ile kesin zamanlama
+          case "scheduleAlarmChain":
+              if let args = call.arguments as? [String: Any],
+                 let id = args["id"] as? String,
+                 let fireDateEpoch = args["fireDate"] as? Double,
+                 let title = args["title"] as? String {
+                  let sound = args["sound"] as? String ?? "hard_alarm.mp3"
+                  let count = args["count"] as? Int ?? 20
+                  let intervalSeconds = args["intervalSeconds"] as? Int ?? 15
+                  
+                  // epoch saniyesinden Date objesine çevir
+                  let fireDate = Date(timeIntervalSince1970: fireDateEpoch)
+                  
+                  AlarmKitManager.shared.scheduleAlarmChain(
+                      id: id,
+                      fireDate: fireDate,
+                      title: title,
+                      sound: sound,
+                      count: count,
+                      intervalSeconds: intervalSeconds
+                  )
+                  result(true)
+              } else {
+                  result(FlutterError(code: "INVALID_ARGS", message: "Arguments missing for scheduleAlarmChain", details: nil))
+              }
+          
           case "stopAlarm":
               if let args = call.arguments as? [String: Any],
                  let id = args["id"] as? String {
                   AlarmKitManager.shared.removeAlarm(id: id)
                   result(true)
               } else {
-                  result(FlutterError(code: "INVALID_ARGS", message: "ID missing", details: nil))
+                  result(FlutterError(code: "INVALID_ARGS", message: "ID missing for stopAlarm", details: nil))
               }
+          
           default:
               result(FlutterMethodNotImplemented)
           }
       } else {
-          result(FlutterError(code: "UNSUPPORTED_IOS_VERSION", message: "AlarmKit requires iOS 17+", details: nil))
+          // iOS 12'den eski sistemler için sessizce devam et
+          result(nil)
       }
     })
 
@@ -74,7 +115,7 @@ import alarm
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // Bildirime tıklandığında (Uygulama açık/arkaplanda iken)
+  // Bildirime tıklandığında (Uygulama açık/arkaplanda/kapalı iken)
   override func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,
@@ -82,11 +123,36 @@ import alarm
   ) {
     let userInfo = response.notification.request.content.userInfo
     if let alarmId = userInfo["alarmId"] as? String {
-        let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-        let alarmKitChannel = FlutterMethodChannel(name: "com.app/alarm_kit",
-                                                  binaryMessenger: controller.binaryMessenger)
-        alarmKitChannel.invokeMethod("onAlarmTapped", arguments: alarmId)
+        // Uygulama kapalıyken bildirime tıklandı - launchedAlarmId'yi güncelle
+        // Flutter tarafı hazır olana kadar burada saklıyoruz
+        if launchedAlarmId == nil {
+            launchedAlarmId = alarmId
+        }
+        
+        // Uygulama zaten açıksa doğrudan Flutter'a bildir
+        let controller = window?.rootViewController as? FlutterViewController
+        if let messenger = controller?.binaryMessenger {
+            let alarmKitChannel = FlutterMethodChannel(
+                name: "com.app/alarm_kit",
+                binaryMessenger: messenger
+            )
+            alarmKitChannel.invokeMethod("onAlarmTapped", arguments: alarmId)
+        }
     }
     completionHandler()
+  }
+  
+  // Uygulama açıkken gelen bildirimi göster (ön planda)
+  override func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    // Uygulama açıkken de alarm bildirimi ses + banner ile gösterilsin
+    if #available(iOS 14.0, *) {
+        completionHandler([.banner, .sound, .badge])
+    } else {
+        completionHandler([.alert, .sound, .badge])
+    }
   }
 }

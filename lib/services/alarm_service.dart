@@ -121,15 +121,13 @@ class AlarmService {
       // AlarmKit entegrasyonu sayesinde artık "Swipe Kill" uyarısına gerek kalmadı.
       await Alarm.set(alarmSettings: alarmSettings);
       
-      // iOS 17+ AlarmKit Entegrasyonu (Sistem Seviyesinde Arkaplanda Çalma Garantisi)
+      // iOS AlarmKit Entegrasyonu - zincirleme bildirim (scheduleAlarmChain daha güvenilir)
       if (Platform.isIOS) {
-        await AlarmKitService.scheduleAlarm(
+        await AlarmKitService.scheduleAlarmChain(
           id: alarm.id,
-          hour: alarm.hour,
-          minute: alarm.minute,
+          fireDate: alarmTime, // Tam alarm saatini iletiyoruz, Swift gecikmeyi oradan hesaplar
           title: alarm.label.isEmpty ? "Alarm" : alarm.label,
-          repeats: alarm.repeatDays,
-          sound: audioPathAsset.split('/').last,
+          sound: 'hard_alarm.mp3', // BİLDİRİMDE HER ZAMAN HARD ÇALSIN
         );
       }
 

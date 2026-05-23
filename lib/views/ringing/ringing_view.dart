@@ -9,10 +9,7 @@ import 'shake_view.dart';
 import 'typing_view.dart';
 import 'memory_view.dart';
 import 'barcode_scanner_view.dart';
-import 'package:audioplayers/audioplayers.dart';
-import '../home/success_view.dart';
 import '../../views/components/banner_ad_widget.dart';
-import 'package:alarm/alarm.dart';
 
 class RingingView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -45,8 +42,14 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
   Future<void> _startContinuousSound() async {
     try {
       final alarms = ref.read(homeViewModelProvider);
-      final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
-      await ref.read(alarmServiceProvider).playForegroundRinging(currentAlarm.soundPath);
+      String soundPath = 'assets/audio/hard_alarm.mp3'; // Varsayılan
+
+      if (alarms.isNotEmpty) {
+        final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId, orElse: () => alarms.first);
+        soundPath = currentAlarm.soundPath;
+      }
+      
+      await ref.read(alarmServiceProvider).playForegroundRinging(soundPath);
     } catch (e) {
       debugPrint("Ses başlatılamadı: $e");
     }
@@ -64,15 +67,18 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
     String stopMethod = 'math';
     try {
       final alarms = ref.read(homeViewModelProvider);
-      final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId);
-      stopMethod = currentAlarm.stopMethod;
+      // Eğer henüz veritabanı yüklenmediyse veya liste boşsa hata fırlatabilir
+      if (alarms.isNotEmpty) {
+        final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId, orElse: () => alarms.first);
+        stopMethod = currentAlarm.stopMethod;
 
-      if (!isSnooze && currentAlarm.rewardUnlocked) {
-        final updatedAlarm = currentAlarm.copyWith(rewardUnlocked: false, stopMethod: 'math');
-        ref.read(homeViewModelProvider.notifier).silentEditAlarm(updatedAlarm);
+        if (!isSnooze && currentAlarm.rewardUnlocked) {
+          final updatedAlarm = currentAlarm.copyWith(rewardUnlocked: false, stopMethod: 'math');
+          ref.read(homeViewModelProvider.notifier).silentEditAlarm(updatedAlarm);
+        }
       }
     } catch (e) {
-      debugPrint("Alarm bulunamadı, math ile devam ediliyor.");
+      debugPrint("Alarm verisi okunurken hata veya boş liste: $e");
     }
 
     Widget nextView;
@@ -88,7 +94,12 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
       nextView = PuzzleView(alarmId: widget.alarmId, isSnooze: isSnooze);
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextView));
+    // Navigasyonu garanti et
+    Future.microtask(() {
+      if (context.mounted) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextView));
+      }
+    });
   }
 
   @override

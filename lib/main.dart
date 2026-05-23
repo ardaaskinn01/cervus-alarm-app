@@ -56,6 +56,7 @@ void main() async {
 }
 
 final ValueNotifier<bool> isAppReady = ValueNotifier<bool>(false);
+int? pendingAlarmId;
 
 // ==========================================
 // 🚀 GLOBAL ALARM DİNLEYİCİSİ BURAYA TAŞINDI
@@ -80,12 +81,33 @@ class _AlarmAppState extends ConsumerState<AlarmApp> with WidgetsBindingObserver
     if (Platform.isIOS) {
       AlarmKitService.init((alarmId) {
         final id = int.tryParse(alarmId);
-        if (id != null) {
-          navigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (context) => RingingView(alarmId: id)),
-          );
+        if (id == null) return;
+
+        if (!isAppReady.value) {
+          // Splash screen bitmedi → sakla, SplashScreen bitiş anında kullanacak
+          pendingAlarmId = id;
+        } else {
+          // Uygulama açık → navigatorKey hazır olana kadar retry
+          _navigateToRinging(id);
         }
       });
+    }
+  }
+
+  /// NavigatorKey hazır olana kadar retry eden güvenli navigasyon
+  void _navigateToRinging(int alarmId, {int retryCount = 0}) {
+    if (navigatorKey.currentState != null) {
+      navigatorKey.currentState!.push(
+        MaterialPageRoute(builder: (context) => RingingView(alarmId: alarmId)),
+      );
+    } else if (retryCount < 10) {
+      // Henüz hazır değilse 200ms sonra tekrar dene (max 2 saniye)
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _navigateToRinging(alarmId, retryCount: retryCount + 1);
+      });
+    } else {
+      // 2 saniye içinde hala açılmadıysa pendingAlarmId'ye yaz
+      pendingAlarmId = alarmId;
     }
   }
 
@@ -236,23 +258,32 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       // 3. TÜM ARKA PLAN GÖREVLERİNİN BİTMESİNİ BEKLE
       await initTasks;
 
-      // 4. MİNİMUM SPLASH SÜRESİNİ 1.5 SANİYEYE İNDİRDİK
+      // 4. BİLDİRİM/ALARM GEÇİŞİ İÇİN 2.5 SANİYE BEKLEME GARANTİSİ (Uygulamanın toparlanması için)
       final elapsedTime = DateTime.now().difference(startTime);
-      if (elapsedTime.inMilliseconds < 1500) {
-        await Future.delayed(Duration(milliseconds: 1500 - elapsedTime.inMilliseconds));
+      if (elapsedTime.inMilliseconds < 2500) {
+        await Future.delayed(Duration(milliseconds: 2500 - elapsedTime.inMilliseconds));
       }
 
       bool isPrivacyAccepted = storageService.getPrivacyPolicyAccepted();
       Widget nextView = isPrivacyAccepted ? const HomeView() : const InitialSetupView();
+      
       final NotificationAppLaunchDetails? launchDetails = await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
-      if (launchDetails?.didNotificationLaunchApp ?? false) {
+      
+      // Öncelik 1: Bekleyen AlarmKit bildirimi (killed state'den geldi)
+      if (pendingAlarmId != null) {
+        nextView = RingingView(alarmId: pendingAlarmId!);
+        pendingAlarmId = null;
+      } 
+      // Öncelik 2: Flutter Local Notifications üzerinden geldi
+      else if (launchDetails?.didNotificationLaunchApp ?? false) {
         final payload = launchDetails?.notificationResponse?.payload;
         if (payload != null) {
           final int? alarmId = int.tryParse(payload);
           if (alarmId != null) nextView = RingingView(alarmId: alarmId);
         }
-      } else if (Platform.isIOS) {
-        // AlarmKit/Native Tarafından gelen açılışı kontrol et
+      } 
+      // Öncelik 3: native delegate fallback
+      else if (Platform.isIOS) {
         final String? nativeId = await AlarmKitService.getLaunchedAlarmId();
         if (nativeId != null) {
           final int? alarmId = int.tryParse(nativeId);

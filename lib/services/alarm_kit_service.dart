@@ -54,6 +54,33 @@ class AlarmKitService {
     }
   }
 
+  /// Daha güvenilir zincirleme bildirim yöntemi.
+  /// fireDate: Alarmın tam tetikleneceği an (Unix timestamp, saniye cinsinden)
+  static Future<void> scheduleAlarmChain({
+    required int id,
+    required DateTime fireDate,
+    required String title,
+    String sound = 'hard_alarm.mp3',
+    int count = 20,
+    int intervalSeconds = 15,
+  }) async {
+    if (!Platform.isIOS) return;
+    try {
+      // fireDate'i epoch saniyesine çevir
+      final fireDateEpoch = fireDate.millisecondsSinceEpoch / 1000.0;
+      await _channel.invokeMethod('scheduleAlarmChain', {
+        'id': id.toString(),
+        'fireDate': fireDateEpoch,
+        'title': title,
+        'sound': sound,
+        'count': count,
+        'intervalSeconds': intervalSeconds,
+      });
+    } on PlatformException catch (e) {
+      print("AlarmKit Chain Error: ${e.message}");
+    }
+  }
+
   static Future<void> stopAlarm(int id) async {
     if (!Platform.isIOS) return;
     try {
