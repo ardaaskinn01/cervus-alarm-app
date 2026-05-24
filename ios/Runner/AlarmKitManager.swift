@@ -115,17 +115,17 @@ class AlarmKitManager {
         content.body = "⏰ UYANMA VAKTİ! (Durdurmak için dokunun)"
         content.userInfo = ["alarmId": alarmId]
         
-        // Ses dosyası uygulama bundle içinde mi?
-        // bg_alarm.mp3 -> Xcode'da "Copy Bundle Resources"a eklenmiş olmalı
+        // Ses dosyası kontrolü ve sıralı fallback (Yedekleme) planı
         let soundName = sound.replacingOccurrences(of: ".mp3", with: "")
+        
         if Bundle.main.url(forResource: soundName, withExtension: "mp3") != nil {
-            content.sound = UNNotificationSound.criticalSoundNamed(
-                UNNotificationSoundName(rawValue: sound),
-                withAudioVolume: 1.0
-            )
+            // 1. Tercih: bg_alarm.mp3 (Eğer bundle'a manuel eklendiyse)
+            content.sound = UNNotificationSound.criticalSoundNamed(UNNotificationSoundName(rawValue: sound), withAudioVolume: 1.0)
+        } else if Bundle.main.url(forResource: "hard_alarm", withExtension: "mp3") != nil {
+            // 2. Tercih: hard_alarm.mp3 (Yedek ses)
+            content.sound = UNNotificationSound.criticalSoundNamed(UNNotificationSoundName(rawValue: "hard_alarm.mp3"), withAudioVolume: 1.0)
         } else {
-            // Dosya bundle'da yoksa en yüksek sistem sesini çal
-            print("AlarmKit: '\(sound)' dosyası bundle'da bulunamadı, defaultCriticalSound kullanılıyor.")
+            // 3. Tercih: Sistem Kritik Sesi (Dosya bulunamazsa bile mutlaka ses çıkartır)
             content.sound = UNNotificationSound.defaultCriticalSound(withAudioVolume: 1.0)
         }
         
