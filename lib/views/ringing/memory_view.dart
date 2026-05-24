@@ -5,6 +5,7 @@ import '../../core/app_theme.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../services/alarm_service.dart';
 import '../home/success_view.dart';
+import '../home/home_view.dart';
 import '../../views/components/banner_ad_widget.dart';
 import '../../core/ad_helper.dart';
 import '../../services/revenuecat_service.dart';
@@ -92,7 +93,12 @@ class _MemoryViewState extends ConsumerState<MemoryView> {
     
     if (widget.isSnooze) {
       await ref.read(homeViewModelProvider.notifier).snoozeAlarm(widget.alarmId);
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeView()),
+          (route) => false,
+        );
+      }
     } else {
       try {
         final alarms = ref.read(homeViewModelProvider);

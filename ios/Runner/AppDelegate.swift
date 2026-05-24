@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import UserNotifications
+import MediaPlayer
 import alarm
 
 @main
@@ -98,6 +99,15 @@ import alarm
                   result(FlutterError(code: "INVALID_ARGS", message: "ID missing for stopAlarm", details: nil))
               }
           
+          case "setSystemVolume":
+              if let args = call.arguments as? [String: Any],
+                 let volume = args["volume"] as? Float {
+                  self?.setSystemVolume(volume)
+                  result(true)
+              } else {
+                  result(FlutterError(code: "INVALID_ARGS", message: "Volume missing", details: nil))
+              }
+          
           default:
               result(FlutterMethodNotImplemented)
           }
@@ -113,6 +123,16 @@ import alarm
     SwiftAlarmPlugin.registerBackgroundTasks()
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Cihazın sistem sesini zorla değiştiren fonksiyon (iOS için MPVolumeView hilesi)
+  private func setSystemVolume(_ volume: Float) {
+    let volumeView = MPVolumeView()
+    if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            slider.value = volume
+        }
+    }
   }
 
   // Bildirime tıklandığında (Uygulama açık/arkaplanda/kapalı iken)

@@ -81,6 +81,15 @@ class AlarmKitService {
     }
   }
 
+  static Future<void> setSystemVolume(double volume) async {
+    if (!Platform.isIOS) return;
+    try {
+      await _channel.invokeMethod('setSystemVolume', {'volume': volume});
+    } catch (e) {
+      print("Set Volume Error: $e");
+    }
+  }
+
   static Future<void> stopAlarm(int id) async {
     if (!Platform.isIOS) return;
     try {

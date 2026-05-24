@@ -10,6 +10,8 @@ import 'typing_view.dart';
 import 'memory_view.dart';
 import 'barcode_scanner_view.dart';
 import '../../views/components/banner_ad_widget.dart';
+import '../../services/alarm_kit_service.dart';
+import 'dart:io' show Platform;
 
 class RingingView extends ConsumerStatefulWidget {
   final int alarmId;
@@ -34,6 +36,11 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
 
     _bgPulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
     _bgPulseAnimation = Tween<double>(begin: 0.8, end: 1.5).animate(CurvedAnimation(parent: _bgPulseController, curve: Curves.slowMiddle));
+
+    // iOS'ta Ön plana gelindiği an sesi zorla yükselt
+    if (Platform.isIOS) {
+       AlarmKitService.setSystemVolume(1.0);
+    }
 
     // Servis üzerinden sesi başlat (Tüm sayfalarda çalmaya devam edecek)
     _startContinuousSound();

@@ -15,7 +15,7 @@
 		BB1002011CF9000F007C117D /* hard_alarm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BB1002001CF9000F007C117D /* hard_alarm.mp3 */; };
 		BB1002031CF9000F007C117D /* modern_alarm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BB1002021CF9000F007C117D /* modern_alarm.mp3 */; };
 		BB1002051CF9000F007C117D /* soft_alarm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BB1002041CF9000F007C117D /* soft_alarm.mp3 */; };
-		BB1002071CF9000F007C117D /* bg_alarm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BB1002061CF9000F007C117D /* bg_alarm.mp3 */; };
+		BB1002071CF9000F007C117D /* bg_alarm2.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BB1002061CF9000F007C117D /* bg_alarm2.mp3 */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -56,7 +56,7 @@
 		BB1002001CF9000F007C117D /* hard_alarm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = hard_alarm.mp3; sourceTree = "<group>"; };
 		BB1002021CF9000F007C117D /* modern_alarm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = modern_alarm.mp3; sourceTree = "<group>"; };
 		BB1002041CF9000F007C117D /* soft_alarm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = soft_alarm.mp3; sourceTree = "<group>"; };
-		BB1002061CF9000F007C117D /* bg_alarm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = bg_alarm.mp3; sourceTree = "<group>"; };
+		BB1002061CF9000F007C117D /* bg_alarm2.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = bg_alarm2.mp3; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -130,7 +130,7 @@
 				BB1002001CF9000F007C117D /* hard_alarm.mp3 */,
 				BB1002021CF9000F007C117D /* modern_alarm.mp3 */,
 				BB1002041CF9000F007C117D /* soft_alarm.mp3 */,
-				BB1002061CF9000F007C117D /* bg_alarm.mp3 */,
+				BB1002061CF9000F007C117D /* bg_alarm2.mp3 */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -240,7 +240,7 @@
 				BB1002011CF9000F007C117D /* hard_alarm.mp3 in Resources */,
 				BB1002031CF9000F007C117D /* modern_alarm.mp3 in Resources */,
 				BB1002051CF9000F007C117D /* soft_alarm.mp3 in Resources */,
-				BB1002071CF9000F007C117D /* bg_alarm.mp3 in Resources */,
+				BB1002071CF9000F007C117D /* bg_alarm2.mp3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
