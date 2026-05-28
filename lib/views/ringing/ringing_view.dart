@@ -49,7 +49,7 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
   Future<void> _startContinuousSound() async {
     try {
       final alarms = ref.read(homeViewModelProvider);
-      String soundPath = 'assets/audio/hard_alarm.mp3'; // Varsayılan
+      String soundPath = 'assets/audio/bg_alarm.mp3'; // Varsayılan
 
       if (alarms.isNotEmpty) {
         final currentAlarm = alarms.firstWhere((a) => a.id == widget.alarmId, orElse: () => alarms.first);

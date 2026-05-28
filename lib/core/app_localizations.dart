@@ -133,9 +133,9 @@ class AppLocalizations {
 
       // Melody
       'melody_custom': 'Özel Ses',
-      'melody_hard': 'Hard',
-      'melody_soft': 'Soft',
-      'melody_modern': 'Modern',
+      'melody_low': 'Düşük',
+      'melody_medium': 'Orta',
+      'melody_high': 'Yüksek',
 
       // Lock & Rewards
       'premium_lock_title': 'Pro Özellik',
@@ -172,6 +172,12 @@ class AppLocalizations {
       'battery_dialog_open_settings': 'Ayarları Aç',
       'battery_snack_bar': 'Ayarlar > Bildirimler > Alarmly yolunu izleyin ve bildirimleri açın.',
       'settings_no_custom_q': 'Henüz özel soru yok.',
+      'settings_bg_sound_title': 'Arkaplan Alarm Politikası',
+      'settings_bg_sound_subtitle': 'Bildirimlerdeki uyanma şiddetini seçin',
+      'bg_sound_low': 'Düşük (bg_alarm_low)',
+      'bg_sound_medium': 'Orta (bg_alarm)',
+      'bg_sound_high': 'Yüksek (bg_alarm2)',
+      'bg_sound_test': 'Dene',
     },
     'en': {
       'app_title': 'Alarmly - Wake Force Alarm',
@@ -283,9 +289,9 @@ class AppLocalizations {
 
       // Melody
       'melody_custom': 'Custom',
-      'melody_hard': 'Hard',
-      'melody_soft': 'Soft',
-      'melody_modern': 'Modern',
+      'melody_low': 'Low',
+      'melody_medium': 'Medium',
+      'melody_high': 'High',
 
       // Lock & Rewards
       'premium_lock_title': 'Pro Feature',
@@ -322,6 +328,12 @@ class AppLocalizations {
       'battery_dialog_open_settings': 'Open Settings',
       'battery_snack_bar': 'Go to Settings > Notifications > Alarmly and turn on notifications.',
       'settings_no_custom_q': 'No custom questions yet.',
+      'settings_bg_sound_title': 'Background Alarm Policy',
+      'settings_bg_sound_subtitle': 'Choose wake-up intensity for notifications',
+      'bg_sound_low': 'Low (bg_alarm_low)',
+      'bg_sound_medium': 'Medium (bg_alarm)',
+      'bg_sound_high': 'High (bg_alarm2)',
+      'bg_sound_test': 'Test',
     },
   };
 

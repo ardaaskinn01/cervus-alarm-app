@@ -121,9 +121,9 @@ class AlarmKitManager {
         if Bundle.main.url(forResource: soundName, withExtension: "mp3") != nil {
             // 1. Tercih: bg_alarm.mp3 (Eğer bundle'a manuel eklendiyse)
             content.sound = UNNotificationSound.criticalSoundNamed(UNNotificationSoundName(rawValue: sound), withAudioVolume: 1.0)
-        } else if Bundle.main.url(forResource: "hard_alarm", withExtension: "mp3") != nil {
-            // 2. Tercih: hard_alarm.mp3 (Yedek ses)
-            content.sound = UNNotificationSound.criticalSoundNamed(UNNotificationSoundName(rawValue: "hard_alarm.mp3"), withAudioVolume: 1.0)
+        } else if Bundle.main.url(forResource: "bg_alarm", withExtension: "mp3") != nil {
+            // 2. Tercih: bg_alarm.mp3 (Yedek ses)
+            content.sound = UNNotificationSound.criticalSoundNamed(UNNotificationSoundName(rawValue: "bg_alarm.mp3"), withAudioVolume: 1.0)
         } else {
             // 3. Tercih: Sistem Kritik Sesi (Dosya bulunamazsa bile mutlaka ses çıkartır)
             content.sound = UNNotificationSound.defaultCriticalSound(withAudioVolume: 1.0)

@@ -55,7 +55,7 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
     } else {
       selectedTime = DateTime.now();
       selectedDays = [];
-      selectedSound = 'assets/audio/hard_alarm.mp3';
+      selectedSound = 'assets/audio/bg_alarm.mp3';
       selectedStopMethod = 'math';
       labelController = TextEditingController();
       _rewardUnlockedThisSession = false;
@@ -325,9 +325,9 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      _melodyItem(AppLocalizations.get('melody_hard', locale), 'assets/audio/hard_alarm.mp3', Icons.volume_up, false),
-                      _melodyItem(AppLocalizations.get('melody_soft', locale), 'assets/audio/soft_alarm.mp3', Icons.notifications_active_outlined, false),
-                      _melodyItem(AppLocalizations.get('melody_modern', locale), 'assets/audio/modern_alarm.mp3', Icons.music_note_outlined, false),
+                      _melodyItem(AppLocalizations.get('melody_low', locale), 'assets/audio/bg_alarm_low.mp3', Icons.notifications_rounded, false),
+                      _melodyItem(AppLocalizations.get('melody_medium', locale), 'assets/audio/bg_alarm.mp3', Icons.notifications_active_rounded, false),
+                      _melodyItem(AppLocalizations.get('melody_high', locale), 'assets/audio/bg_alarm2.mp3', Icons.campaign_rounded, false),
                       ..._customSounds.map((s) => _melodyItem(s['name'] ?? '', s['path'] ?? '', Icons.my_library_music_outlined, true)),
                     ],
                   ),
@@ -388,7 +388,9 @@ class _AddAlarmBottomSheetState extends ConsumerState<AddAlarmBottomSheet> {
           if (isCustom) {
             await _audioPlayer.play(DeviceFileSource(path));
           } else {
-            await FlutterRingtonePlayer().play(fromAsset: path, looping: false, volume: 0.8);
+            // Asset içindeki bg_alarm'ları çal
+            String assetPath = path.replaceAll('assets/', '');
+            await _audioPlayer.play(AssetSource(assetPath));
           }
         } catch (e) {
           debugPrint("Ses çalınamadı: $e");

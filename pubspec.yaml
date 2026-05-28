@@ -5,7 +5,7 @@ description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 
-version: 2.5.1+102
+version: 2.5.2+103
 
 environment:
   sdk: ^3.7.2
@@ -74,9 +74,9 @@ flutter:
   # the material Icons class.
   assets:
     - shorebird.yaml
-    - assets/audio/soft_alarm.mp3
-    - assets/audio/hard_alarm.mp3
-    - assets/audio/modern_alarm.mp3
+    - assets/audio/bg_alarm_low.mp3
+    - assets/audio/bg_alarm.mp3
+    - assets/audio/bg_alarm2.mp3
     - assets/images/Alarmly.PNG
   uses-material-design: true
 

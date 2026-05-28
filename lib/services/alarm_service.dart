@@ -86,17 +86,8 @@ class AlarmService {
     }
 
     // Ses dosyasını belirle (Özel ses mi yoksa asset mi?)
-    String audioPathAsset = 'assets/audio/hard_alarm.mp3'; // Varsayılan
+    String audioPathAsset = alarm.soundPath;
     
-    if (alarm.soundPath.startsWith('/')) {
-      // Eğer yol '/' ile başlıyorsa bu bir dosya yoludur (custom sound)
-      audioPathAsset = alarm.soundPath;
-    } else if (alarm.soundPath.contains('soft_alarm')) {
-       audioPathAsset = 'assets/audio/soft_alarm.mp3';
-    } else if (alarm.soundPath.contains('modern_alarm')) {
-       audioPathAsset = 'assets/audio/modern_alarm.mp3';
-    }
-
     final alarmSettings = AlarmSettings(
       id: alarm.id,
       dateTime: alarmTime,
@@ -123,11 +114,14 @@ class AlarmService {
       
       // iOS AlarmKit Entegrasyonu - zincirleme bildirim (scheduleAlarmChain daha güvenilir)
       if (Platform.isIOS) {
+        // Dosya adı (Örn: bg_alarm2.mp3) path'in son kısmıdır
+        String soundFileName = audioPathAsset.split('/').last;
+        
         await AlarmKitService.scheduleAlarmChain(
           id: alarm.id,
           fireDate: alarmTime, // Tam alarm saatini iletiyoruz, Swift gecikmeyi oradan hesaplar
           title: alarm.label.isEmpty ? "Alarm" : alarm.label,
-          sound: 'bg_alarm2.mp3', // BİLDİRİMDE ARTIK DAHA AGRESİF OLAN BG_ALARM2 ÇALSIN
+          sound: soundFileName, // Seçilen sesin dosya adını bildiriyoruz
         );
       }
 
