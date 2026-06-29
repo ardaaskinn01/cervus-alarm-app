@@ -98,9 +98,9 @@ class AlarmService {
       id: alarm.id,
       dateTime: alarmTime,
       assetAudioPath: audioPathAsset,
-      volumeSettings: const VolumeSettings.fade(
+      volumeSettings: VolumeSettings.fade(
         volume: 1.0,
-        fadeDuration: Duration(seconds: 3),
+        fadeDuration: const Duration(seconds: 3),
         volumeEnforced: true, // Hem iOS hem Android'de ses kontrolünü zorla
       ),
       loopAudio: true,
