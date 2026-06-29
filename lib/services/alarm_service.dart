@@ -32,6 +32,9 @@ class AlarmService {
       String assetPath = soundPath.replaceAll('assets/', '');
       await _foregroundPlayer.setReleaseMode(ReleaseMode.loop);
       await _foregroundPlayer.play(AssetSource(assetPath), volume: 1.0);
+      if (Platform.isIOS) {
+        await AlarmKitService.startVolumeEnforcement(volume: 1.0);
+      }
     } catch (e) {
       debugPrint("Ön plan ses çalma hatası: $e");
     }
@@ -40,6 +43,9 @@ class AlarmService {
   /// Ön plan sesini tamamen durdurur.
   Future<void> stopForegroundRinging() async {
     await _foregroundPlayer.stop();
+    if (Platform.isIOS) {
+      await AlarmKitService.stopVolumeEnforcement();
+    }
   }
 
   Future<void> init() async {
@@ -92,10 +98,10 @@ class AlarmService {
       id: alarm.id,
       dateTime: alarmTime,
       assetAudioPath: audioPathAsset,
-      volumeSettings: VolumeSettings.fade(
-        volume: 0.8, // %100 yerine %80 ile başlatmak çakışmaları azaltabilir
-        fadeDuration: const Duration(seconds: 5),
-        volumeEnforced: Platform.isAndroid, // Android'de ses kontrolünü zorla
+      volumeSettings: const VolumeSettings.fade(
+        volume: 1.0,
+        fadeDuration: Duration(seconds: 3),
+        volumeEnforced: true, // Hem iOS hem Android'de ses kontrolünü zorla
       ),
       loopAudio: true,
       vibrate: _storage.getGlobalVibrate(),
@@ -131,16 +137,20 @@ class AlarmService {
   }
 
   Future<void> stopAlarm(int id) async {
+    await stopForegroundRinging();
     await Alarm.stop(id);
     if (Platform.isIOS) {
       await AlarmKitService.stopAlarm(id);
+      await AlarmKitService.stopVolumeEnforcement();
     }
   }
 
   Future<void> cancelAlarm(int id) async {
+    await stopForegroundRinging();
     await Alarm.stop(id);
     if (Platform.isIOS) {
       await AlarmKitService.stopAlarm(id);
+      await AlarmKitService.stopVolumeEnforcement();
     }
   }
 }

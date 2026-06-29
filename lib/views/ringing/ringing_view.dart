@@ -37,9 +37,9 @@ class _RingingViewState extends ConsumerState<RingingView> with TickerProviderSt
     _bgPulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
     _bgPulseAnimation = Tween<double>(begin: 0.8, end: 1.5).animate(CurvedAnimation(parent: _bgPulseController, curve: Curves.slowMiddle));
 
-    // iOS'ta Ön plana gelindiği an sesi zorla yükselt
+    // iOS'ta Ön plana gelindiği an sesi zorla yükselt ve kilitler (kısılamaz yapar)
     if (Platform.isIOS) {
-       AlarmKitService.setSystemVolume(1.0);
+       AlarmKitService.startVolumeEnforcement(volume: 1.0);
     }
 
     // Servis üzerinden sesi başlat (Tüm sayfalarda çalmaya devam edecek)

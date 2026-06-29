@@ -90,6 +90,24 @@ class AlarmKitService {
     }
   }
 
+  static Future<void> startVolumeEnforcement({double volume = 1.0}) async {
+    if (!Platform.isIOS) return;
+    try {
+      await _channel.invokeMethod('startVolumeEnforcement', {'volume': volume});
+    } catch (e) {
+      print("Start Volume Enforcement Error: $e");
+    }
+  }
+
+  static Future<void> stopVolumeEnforcement() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _channel.invokeMethod('stopVolumeEnforcement');
+    } catch (e) {
+      print("Stop Volume Enforcement Error: $e");
+    }
+  }
+
   static Future<void> stopAlarm(int id) async {
     if (!Platform.isIOS) return;
     try {

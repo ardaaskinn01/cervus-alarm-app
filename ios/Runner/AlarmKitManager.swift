@@ -1,6 +1,7 @@
 import Foundation
 import UserNotifications
 import AVFoundation
+import MediaPlayer
 
 /// AlarmKitManager: Israrcı ve Yüksek Sesli alarm sistemi.
 /// iOS'ta uygulama kapalıyken donanım sesini açamazsınız ancak
@@ -10,7 +11,58 @@ import AVFoundation
 class AlarmKitManager {
     static let shared = AlarmKitManager()
     
+    private var volumeTimer: Timer?
+    private var targetVolume: Float = 1.0
+    private var isEnforcingVolume: Bool = false
+
     private init() {}
+
+    func setSystemVolume(_ volume: Float) {
+        let volumeView = MPVolumeView()
+        if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
+            DispatchQueue.main.async {
+                slider.value = volume
+            }
+        }
+    }
+
+    func startVolumeEnforcement(volume: Float = 1.0) {
+        self.targetVolume = volume
+        self.isEnforcingVolume = true
+        setSystemVolume(volume)
+        
+        volumeTimer?.invalidate()
+        volumeTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            guard let self = self, self.isEnforcingVolume else { return }
+            let currentVol = AVAudioSession.sharedInstance().outputVolume
+            if abs(currentVol - self.targetVolume) > 0.01 {
+                self.setSystemVolume(self.targetVolume)
+            }
+        }
+        
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("AVAudioSessionOutputVolumeDidChangeNotification"), object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleVolumeChange),
+            name: NSNotification.Name("AVAudioSessionOutputVolumeDidChangeNotification"),
+            object: nil
+        )
+    }
+
+    @objc private func handleVolumeChange(notification: NSNotification) {
+        guard isEnforcingVolume else { return }
+        let currentVol = AVAudioSession.sharedInstance().outputVolume
+        if abs(currentVol - targetVolume) > 0.01 {
+            setSystemVolume(targetVolume)
+        }
+    }
+
+    func stopVolumeEnforcement() {
+        isEnforcingVolume = false
+        volumeTimer?.invalidate()
+        volumeTimer = nil
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("AVAudioSessionOutputVolumeDidChangeNotification"), object: nil)
+    }
     
     func requestAuthorization(completion: @escaping (Bool) -> Void) {
         let center = UNUserNotificationCenter.current()

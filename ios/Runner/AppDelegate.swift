@@ -102,11 +102,20 @@ import alarm
           case "setSystemVolume":
               if let args = call.arguments as? [String: Any],
                  let volume = args["volume"] as? Float {
-                  self?.setSystemVolume(volume)
+                  AlarmKitManager.shared.setSystemVolume(volume)
                   result(true)
               } else {
                   result(FlutterError(code: "INVALID_ARGS", message: "Volume missing", details: nil))
               }
+          
+          case "startVolumeEnforcement":
+              let volume = (call.arguments as? [String: Any])?["volume"] as? Float ?? 1.0
+              AlarmKitManager.shared.startVolumeEnforcement(volume: volume)
+              result(true)
+          
+          case "stopVolumeEnforcement":
+              AlarmKitManager.shared.stopVolumeEnforcement()
+              result(true)
           
           default:
               result(FlutterMethodNotImplemented)
@@ -127,12 +136,7 @@ import alarm
 
   // Cihazın sistem sesini zorla değiştiren fonksiyon (iOS için MPVolumeView hilesi)
   private func setSystemVolume(_ volume: Float) {
-    let volumeView = MPVolumeView()
-    if let slider = volumeView.subviews.first(where: { $0 is UISlider }) as? UISlider {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            slider.value = volume
-        }
-    }
+    AlarmKitManager.shared.setSystemVolume(volume)
   }
 
   // Bildirime tıklandığında (Uygulama açık/arkaplanda/kapalı iken)
