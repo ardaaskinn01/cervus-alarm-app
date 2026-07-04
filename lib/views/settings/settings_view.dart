@@ -118,13 +118,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                       );
                     }
 
-                    // Hata veya veri yoksa kullanıcı dostu mesaj göster — asla crash yok
                     if (snapshot.hasError || snapshot.data == null) {
-                      final errorMsg = snapshot.hasError ? snapshot.error.toString() : (isTr ? "Paket bulunamadı" : "No offerings found");
                       return Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          "${isTr ? "Hata:" : "Error:"} $errorMsg",
+                          AppLocalizations.get('premium_load_fail', locale),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.redAccent, fontSize: 13),
                         ),
@@ -137,7 +135,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                     if (packages.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(isTr ? "Şu an satın alınabilecek paket bulunamadı." : "No packages available to purchase.", style: const TextStyle(color: Colors.white70)),
+                        child: Text(
+                          AppLocalizations.get('premium_no_packages', locale), 
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                       );
                     }
                     
@@ -154,28 +155,30 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                           _buildSubscriptionCard(
                             ctx,
                             package: monthly,
-                            title: isTr ? "Aylık" : "Monthly",
+                            title: AppLocalizations.get('premium_monthly_title', locale),
                             price: monthly.storeProduct.priceString,
-                            subtitle: isTr ? "Her ay yenilenir" : "Renews every month",
+                            subtitle: AppLocalizations.get('premium_monthly_subtitle', locale),
+                            locale: locale,
                           ),
                         if (yearly != null)
                           _buildSubscriptionCard(
                             ctx,
                             package: yearly,
-                            title: isTr ? "Yıllık" : "Yearly",
+                            title: AppLocalizations.get('premium_yearly_title', locale),
                             price: yearly.storeProduct.priceString,
                             originalPrice: isTr ? "₺599.99" : "\$35.99",
-                            subtitle: isTr ? "En maliyet etkin seçim" : "Best value for money",
+                            subtitle: AppLocalizations.get('premium_yearly_subtitle', locale),
                             isPopular: true,
-                            isTr: isTr,
+                            locale: locale,
                           ),
                         if (lifetime != null)
                           _buildSubscriptionCard(
                             ctx,
                             package: lifetime,
-                            title: isTr ? "Ömür Boyu" : "Lifetime",
+                            title: AppLocalizations.get('premium_lifetime_title', locale),
                             price: lifetime.storeProduct.priceString,
-                            subtitle: isTr ? "Tek seferlik ödeme" : "One-time payment",
+                            subtitle: AppLocalizations.get('premium_lifetime_subtitle', locale),
+                            locale: locale,
                           ),
                       ],
                     );
@@ -189,19 +192,17 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                   children: [
                     TextButton(
                       onPressed: () => launchUrl(Uri.parse("https://cervusdigital.com/alarmly/privacy-policy/")),
-                      child: Text(isTr ? "Gizlilik" : "Privacy Policy", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                      child: Text(AppLocalizations.get('premium_privacy', locale), style: const TextStyle(color: Colors.white38, fontSize: 11)),
                     ),
                     const Text("|", style: TextStyle(color: Colors.white38)),
                     TextButton(
                       onPressed: () => launchUrl(Uri.parse("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")),
-                      child: Text(isTr ? "Kullanım Koşulları" : "Terms of Use (EULA)", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                      child: Text(AppLocalizations.get('premium_terms', locale), style: const TextStyle(color: Colors.white38, fontSize: 11)),
                     ),
                   ],
                 ),
                 Text(
-                  isTr 
-                    ? "Abonelikler otomatik olarak yenilenir. İptal edilmediği sürece seçilen dönem sonunda ücret indirilir."
-                    : "Subscriptions renew automatically. Payment will be charged at the end of the period unless cancelled.",
+                  AppLocalizations.get('premium_auto_renew_desc_full', locale),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white24, fontSize: 10),
                 ),
@@ -233,8 +234,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
     required String price,
     String? originalPrice,
     required String subtitle,
+    required String locale,
     bool isPopular = false,
-    bool isTr = false,
   }) {
     return GestureDetector(
       onTap: () async {
@@ -263,7 +264,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(6)),
-                          child: Text(isTr ? "POPÜLER" : "POPULAR", style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            AppLocalizations.get('premium_popular_badge', locale), 
+                            style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ]
                     ],

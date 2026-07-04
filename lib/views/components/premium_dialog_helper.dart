@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:purchases_flutter/models/offering_wrapper.dart';
-import 'package:purchases_flutter/models/package_wrapper.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_localizations.dart';
 import '../../core/app_theme.dart';
@@ -10,7 +8,6 @@ import '../../services/revenuecat_service.dart';
 class PremiumDialogHelper {
   static void show(BuildContext context, WidgetRef ref) {
     final locale = ref.read(localeProvider);
-    final isTr = locale == 'tr';
     
     showDialog(
       context: context,
@@ -51,7 +48,7 @@ class PremiumDialogHelper {
                       return Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          isTr ? "Paketler yüklenemedi." : "Offerings could not be loaded.",
+                          AppLocalizations.get('premium_load_fail', locale),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.redAccent, fontSize: 13),
                         ),
@@ -62,25 +59,60 @@ class PremiumDialogHelper {
                     if (packages.isEmpty) {
                       return Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(isTr ? "Paket bulunamadı." : "No packages found.", style: const TextStyle(color: Colors.white70)),
+                        child: Text(
+                          AppLocalizations.get('premium_no_packages', locale),
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                       );
                     }
-                    
-                    // Priority sorting or standard listing
+
+                    final monthly = packages.where((p) => p.packageType == PackageType.monthly).firstOrNull ?? 
+                                   packages.where((p) => p.identifier.toLowerCase().contains('monthly')).firstOrNull;
+                    final yearly = packages.where((p) => p.packageType == PackageType.annual).firstOrNull ?? 
+                                  packages.where((p) => p.identifier.toLowerCase().contains('year') || p.identifier.toLowerCase().contains('ann')).firstOrNull;
+                    final lifetime = packages.where((p) => p.packageType == PackageType.lifetime).firstOrNull ?? 
+                                    packages.where((p) => p.identifier.toLowerCase().contains('life') || p.identifier.toLowerCase().contains('pro')).firstOrNull;
+
                     return Column(
-                      children: packages.map((pkg) => _buildSubscriptionCard(
-                        context,
-                        ref,
-                        ctx,
-                        package: pkg,
-                        isTr: isTr,
-                      )).toList(),
+                      children: [
+                        if (monthly != null)
+                          _buildSubscriptionCard(
+                            context,
+                            ref,
+                            ctx,
+                            package: monthly,
+                            title: AppLocalizations.get('premium_monthly_title', locale),
+                            subtitle: AppLocalizations.get('premium_monthly_subtitle', locale),
+                            locale: locale,
+                          ),
+                        if (yearly != null)
+                          _buildSubscriptionCard(
+                            context,
+                            ref,
+                            ctx,
+                            package: yearly,
+                            title: AppLocalizations.get('premium_yearly_title', locale),
+                            subtitle: AppLocalizations.get('premium_yearly_subtitle', locale),
+                            locale: locale,
+                            isPopular: true,
+                          ),
+                        if (lifetime != null)
+                          _buildSubscriptionCard(
+                            context,
+                            ref,
+                            ctx,
+                            package: lifetime,
+                            title: AppLocalizations.get('premium_lifetime_title', locale),
+                            subtitle: AppLocalizations.get('premium_lifetime_subtitle', locale),
+                            locale: locale,
+                          ),
+                      ],
                     );
                   },
                 ),
                 
                 const SizedBox(height: 12),
-                _buildLegalLinks(isTr),
+                _buildLegalLinks(locale),
                 
                 const SizedBox(height: 8),
                 TextButton(
@@ -115,13 +147,16 @@ class PremiumDialogHelper {
     );
   }
 
-  static Widget _buildSubscriptionCard(BuildContext originalContext, WidgetRef ref, BuildContext dialogContext, {required Package package, required bool isTr}) {
-    final title = package.packageType == PackageType.monthly ? (isTr ? "Aylık" : "Monthly") : 
-                  (package.packageType == PackageType.annual ? (isTr ? "Yıllık" : "Annual") : 
-                  (isTr ? "Ömür Boyu" : "Lifetime"));
-    
-    final isPopular = package.packageType == PackageType.annual;
-
+  static Widget _buildSubscriptionCard(
+    BuildContext originalContext,
+    WidgetRef ref,
+    BuildContext dialogContext, {
+    required Package package,
+    required String title,
+    required String subtitle,
+    required String locale,
+    bool isPopular = false,
+  }) {
     return GestureDetector(
       onTap: () async {
         Navigator.pop(dialogContext);
@@ -138,13 +173,32 @@ class PremiumDialogHelper {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                if (isPopular) Text(isTr ? "EN POPÜLER" : "MOST POPULAR", style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.w900)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                      if (isPopular) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(4)),
+                          child: Text(
+                            AppLocalizations.get('premium_popular_badge', locale), 
+                            style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Text(package.storeProduct.priceString, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
@@ -152,7 +206,7 @@ class PremiumDialogHelper {
     );
   }
 
-  static Widget _buildLegalLinks(bool isTr) {
+  static Widget _buildLegalLinks(String locale) {
     return Column(
       children: [
         Row(
@@ -160,17 +214,18 @@ class PremiumDialogHelper {
           children: [
             TextButton(
               onPressed: () => launchUrl(Uri.parse("https://cervusdigital.com/alarmly/privacy-policy/")),
-              child: Text(isTr ? "Gizlilik" : "Privacy", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+              child: Text(AppLocalizations.get('premium_privacy', locale), style: const TextStyle(color: Colors.white38, fontSize: 11)),
             ),
             const Text("|", style: TextStyle(color: Colors.white38)),
             TextButton(
               onPressed: () => launchUrl(Uri.parse("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")),
-              child: Text(isTr ? "Koşullar" : "Terms", style: const TextStyle(color: Colors.white38, fontSize: 11)),
+              child: Text(AppLocalizations.get('premium_terms', locale), style: const TextStyle(color: Colors.white38, fontSize: 11)),
             ),
           ],
         ),
         Text(
-          isTr ? "Abonelikler otomatik yenilenir." : "Subscriptions renew automatically.",
+          AppLocalizations.get('premium_auto_renew_desc', locale),
+          textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white24, fontSize: 10),
         ),
       ],

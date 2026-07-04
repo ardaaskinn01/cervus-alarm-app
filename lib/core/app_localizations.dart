@@ -178,6 +178,21 @@ class AppLocalizations {
       'bg_sound_medium': 'Orta (bg_alarm)',
       'bg_sound_high': 'Yüksek (bg_alarm2)',
       'bg_sound_test': 'Dene',
+      
+      // Premium Subscriptions
+      'premium_monthly_title': 'Aylık',
+      'premium_monthly_subtitle': '1 hafta ücretsiz dene, sonra aylık',
+      'premium_yearly_title': 'Yıllık',
+      'premium_yearly_subtitle': 'En maliyet etkin seçim',
+      'premium_lifetime_title': 'Ömür Boyu',
+      'premium_lifetime_subtitle': 'Tek seferlik ödeme',
+      'premium_popular_badge': 'POPÜLER',
+      'premium_load_fail': 'Paketler yüklenemedi.',
+      'premium_no_packages': 'Paket bulunamadı.',
+      'premium_privacy': 'Gizlilik',
+      'premium_terms': 'Koşullar',
+      'premium_auto_renew_desc': 'Abonelikler otomatik olarak yenilenir.',
+      'premium_auto_renew_desc_full': 'Abonelikler otomatik olarak yenilenir. İptal edilmediği sürece seçilen dönem sonunda ücret indirilir.',
     },
     'en': {
       'app_title': 'Alarmly - Wake Force Alarm',
@@ -334,6 +349,21 @@ class AppLocalizations {
       'bg_sound_medium': 'Medium (bg_alarm)',
       'bg_sound_high': 'High (bg_alarm2)',
       'bg_sound_test': 'Test',
+
+      // Premium Subscriptions
+      'premium_monthly_title': 'Monthly',
+      'premium_monthly_subtitle': '1-week free trial, then monthly',
+      'premium_yearly_title': 'Yearly',
+      'premium_yearly_subtitle': 'Best value for money',
+      'premium_lifetime_title': 'Lifetime',
+      'premium_lifetime_subtitle': 'One-time payment',
+      'premium_popular_badge': 'POPULAR',
+      'premium_load_fail': 'Offerings could not be loaded.',
+      'premium_no_packages': 'No packages found.',
+      'premium_privacy': 'Privacy',
+      'premium_terms': 'Terms',
+      'premium_auto_renew_desc': 'Subscriptions renew automatically.',
+      'premium_auto_renew_desc_full': 'Subscriptions renew automatically. Payment will be charged at the end of the period unless cancelled.',
     },
   };
 
