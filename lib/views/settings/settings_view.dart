@@ -120,7 +120,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                   ),
                   child: Text(
                     AppLocalizations.get('premium_trial_banner', locale),
-                    style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.extrabold),
+                    style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -300,7 +300,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                           ),
                           child: Text(
                             AppLocalizations.get('premium_trial_badge', locale), 
-                            style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.extrabold),
+                            style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w800),
                           ),
                         ),
                       ] else if (isPopular) ...[

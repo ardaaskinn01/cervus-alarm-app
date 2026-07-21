@@ -46,7 +46,7 @@ class PremiumDialogHelper {
                   ),
                   child: Text(
                     AppLocalizations.get('premium_trial_banner', locale),
-                    style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.extrabold),
+                    style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -221,7 +221,7 @@ class PremiumDialogHelper {
                           ),
                           child: Text(
                             AppLocalizations.get('premium_trial_badge', locale), 
-                            style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.extrabold),
+                            style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w800),
                           ),
                         ),
                       ] else if (isPopular) ...[
