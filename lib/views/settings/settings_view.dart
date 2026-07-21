@@ -102,7 +102,29 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                   style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.amber, Colors.orangeAccent],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ],
+                  ),
+                  child: Text(
+                    AppLocalizations.get('premium_trial_banner', locale),
+                    style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.extrabold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 _buildPremiumFeatureRow(Icons.music_note, AppLocalizations.get('premium_popup_feature_1', locale)),
                 _buildPremiumFeatureRow(Icons.extension, AppLocalizations.get('premium_popup_feature_2', locale)),
                 _buildPremiumFeatureRow(Icons.block, AppLocalizations.get('premium_popup_feature_3', locale)),
@@ -159,6 +181,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                             price: monthly.storeProduct.priceString,
                             subtitle: AppLocalizations.get('premium_monthly_subtitle', locale),
                             locale: locale,
+                            isTrial: true,
                           ),
                         if (yearly != null)
                           _buildSubscriptionCard(
@@ -236,7 +259,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
     required String subtitle,
     required String locale,
     bool isPopular = false,
+    bool isTrial = false,
   }) {
+    final borderColor = isTrial 
+        ? Colors.greenAccent 
+        : (isPopular ? Colors.amber : Colors.white.withOpacity(0.1));
+    final bgColor = isTrial 
+        ? Colors.greenAccent.withOpacity(0.12) 
+        : (isPopular ? Colors.amber.withOpacity(0.15) : Colors.white.withOpacity(0.05));
+
     return GestureDetector(
       onTap: () async {
         Navigator.pop(dialogContext);
@@ -246,8 +277,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isPopular ? Colors.amber.withOpacity(0.15) : Colors.white.withOpacity(0.05),
-          border: Border.all(color: isPopular ? Colors.amber : Colors.white.withOpacity(0.1)),
+          color: bgColor,
+          border: Border.all(color: borderColor, width: isTrial || isPopular ? 1.5 : 1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -259,7 +290,20 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                   Row(
                     children: [
                       Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                      if (isPopular) ...[
+                      if (isTrial) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [Colors.greenAccent, Colors.teal]),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            AppLocalizations.get('premium_trial_badge', locale), 
+                            style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.extrabold),
+                          ),
+                        ),
+                      ] else if (isPopular) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -273,7 +317,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> with WidgetsBinding
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                  Text(
+                    subtitle, 
+                    style: TextStyle(
+                      color: isTrial ? Colors.greenAccent.shade100 : Colors.white.withOpacity(0.5), 
+                      fontSize: 12,
+                      fontWeight: isTrial ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -181,12 +181,14 @@ class AppLocalizations {
       
       // Premium Subscriptions
       'premium_monthly_title': 'Aylık',
-      'premium_monthly_subtitle': '1 hafta ücretsiz dene, sonra aylık',
+      'premium_monthly_subtitle': '7 Gün Ücretsiz Dene, Sonra Aylık',
       'premium_yearly_title': 'Yıllık',
       'premium_yearly_subtitle': 'En maliyet etkin seçim',
       'premium_lifetime_title': 'Ömür Boyu',
       'premium_lifetime_subtitle': 'Tek seferlik ödeme',
       'premium_popular_badge': 'POPÜLER',
+      'premium_trial_badge': '7 GÜN ÜCRETSİZ',
+      'premium_trial_banner': '🎁 7 GÜN ÜCRETSİZ DENEME FIRSATI',
       'premium_load_fail': 'Paketler yüklenemedi.',
       'premium_no_packages': 'Paket bulunamadı.',
       'premium_privacy': 'Gizlilik',
@@ -352,12 +354,14 @@ class AppLocalizations {
 
       // Premium Subscriptions
       'premium_monthly_title': 'Monthly',
-      'premium_monthly_subtitle': '1-week free trial, then monthly',
+      'premium_monthly_subtitle': '7-Day Free Trial, then monthly',
       'premium_yearly_title': 'Yearly',
       'premium_yearly_subtitle': 'Best value for money',
       'premium_lifetime_title': 'Lifetime',
       'premium_lifetime_subtitle': 'One-time payment',
       'premium_popular_badge': 'POPULAR',
+      'premium_trial_badge': '7-DAY FREE TRIAL',
+      'premium_trial_banner': '🎁 7-DAY FREE TRIAL OFFER',
       'premium_load_fail': 'Offerings could not be loaded.',
       'premium_no_packages': 'No packages found.',
       'premium_privacy': 'Privacy',

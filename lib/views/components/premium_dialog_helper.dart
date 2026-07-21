@@ -28,7 +28,29 @@ class PremiumDialogHelper {
                   style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.amber, Colors.orangeAccent],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ],
+                  ),
+                  child: Text(
+                    AppLocalizations.get('premium_trial_banner', locale),
+                    style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.extrabold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 _buildFeatureRow(Icons.music_note, AppLocalizations.get('premium_popup_feature_1', locale)),
                 _buildFeatureRow(Icons.extension, AppLocalizations.get('premium_popup_feature_2', locale)),
                 _buildFeatureRow(Icons.block, AppLocalizations.get('premium_popup_feature_3', locale)),
@@ -84,6 +106,7 @@ class PremiumDialogHelper {
                             title: AppLocalizations.get('premium_monthly_title', locale),
                             subtitle: AppLocalizations.get('premium_monthly_subtitle', locale),
                             locale: locale,
+                            isTrial: true,
                           ),
                         if (yearly != null)
                           _buildSubscriptionCard(
@@ -156,7 +179,15 @@ class PremiumDialogHelper {
     required String subtitle,
     required String locale,
     bool isPopular = false,
+    bool isTrial = false,
   }) {
+    final borderColor = isTrial 
+        ? Colors.greenAccent 
+        : (isPopular ? Colors.amber : Colors.white12);
+    final bgColor = isTrial 
+        ? Colors.greenAccent.withOpacity(0.12) 
+        : (isPopular ? Colors.amber.withOpacity(0.1) : Colors.white.withOpacity(0.05));
+
     return GestureDetector(
       onTap: () async {
         Navigator.pop(dialogContext);
@@ -166,8 +197,8 @@ class PremiumDialogHelper {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isPopular ? Colors.amber.withOpacity(0.1) : Colors.white.withOpacity(0.05),
-          border: Border.all(color: isPopular ? Colors.amber : Colors.white12),
+          color: bgColor,
+          border: Border.all(color: borderColor, width: isTrial || isPopular ? 1.5 : 1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -180,7 +211,20 @@ class PremiumDialogHelper {
                   Row(
                     children: [
                       Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                      if (isPopular) ...[
+                      if (isTrial) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [Colors.greenAccent, Colors.teal]),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            AppLocalizations.get('premium_trial_badge', locale), 
+                            style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.extrabold),
+                          ),
+                        ),
+                      ] else if (isPopular) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -194,12 +238,19 @@ class PremiumDialogHelper {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                  Text(
+                    subtitle, 
+                    style: TextStyle(
+                      color: isTrial ? Colors.greenAccent.shade100 : Colors.white.withOpacity(0.5), 
+                      fontSize: 11,
+                      fontWeight: isTrial ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Text(package.storeProduct.priceString, style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(package.storeProduct.priceString, style: TextStyle(color: isTrial ? Colors.greenAccent : Colors.amber, fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
       ),
