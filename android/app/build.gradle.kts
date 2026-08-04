@@ -33,7 +33,7 @@ android {
     defaultConfig {
         applicationId = "com.cervus.alarmly"
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
